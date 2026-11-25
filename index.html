@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La imprenta antigua en la Biblioteca Pública</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/histropediajs@1.7.0/dist/histropedia.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+  :root{
+    --primario:   #0b3b60;
+    --primario-2: #145c8f;
+    --acento:     #e5a823;
+    --fondo:      #f4f6f9;
+    --superficie: #ffffff;
+    --texto:      #1d2733;
+    --texto-suave:#5b6776;
+    --borde:      #dde3ea;
+
+    --gen-mujer:      #0e7c7b;
+    --gen-mujer-suave:#e3f3f1;
+    --gen-varon:      #8794a3;
+    --gen-otro:       #7a4fc9;
+    --gen-otro-suave: #efe9fa;
+    --gen-sd:         #c3ccd6;
+    --gen-compania:      #9a6700;
+    --gen-compania-suave:#fbf1dc;
+
+    --fuente-titulos: "Plus Jakarta Sans", system-ui, sans-serif;
+    --fuente-texto:   "Inter", system-ui, sans-serif;
+
+    --panel-ancho: 380px;
+    --linea-alto:  240px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--fuente-texto);color:var(--texto);background:var(--fondo);
+       display:grid;grid-template-rows:auto auto 1fr auto auto;height:100vh;overflow:hidden}
+  a{color:var(--primario-2)}
+  button{font:inherit}
+
+  .cabecera{background:var(--superficie);border-bottom:1px solid var(--borde);
+            display:flex;align-items:center;gap:1rem;padding:.3rem 1.25rem;flex-wrap:wrap}
+  .logos{display:flex;align-items:center;gap:1rem}
+  .logos a{display:flex;align-items:center}
+  .logos img{height:var(--logo-alto);width:auto;display:block}
+
+  .logos{--logo-alto:40px}
+
+  .logos a.enlace-wiki{height:var(--logo-alto);overflow:hidden}
+  .logos .logo-wiki{height:calc(var(--logo-alto) * 2.5);flex:none}
+  .logos a:hover img{opacity:.85}
+  .logos .sep{width:1px;height:calc(var(--logo-alto) * .8);background:var(--borde)}
+  .logo-texto{font:700 .8rem/1.15 var(--fuente-titulos);color:var(--primario);border:2px solid var(--primario);
+              padding:.3rem .5rem;border-radius:6px;text-decoration:none;max-width:12rem}
+  .titulo h1{margin:0;font:800 1.1rem/1.2 var(--fuente-titulos);color:var(--primario);letter-spacing:-.01em}
+  .titulo p{margin:0;color:var(--texto-suave);font-size:.8rem}
+
+  .barra{background:var(--primario);color:#fff;display:flex;align-items:center;gap:1rem;
+         padding:.25rem 1.25rem;flex-wrap:wrap}
+  .vistas{display:flex;gap:.35rem;align-items:center}
+  .vistas button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45);
+                 padding:.2rem .75rem;border-radius:999px;cursor:pointer;font-size:.85rem}
+  .vistas button[aria-pressed=true]{background:#fff;color:var(--primario);border-color:#fff;font-weight:600}
+  .barra a{color:#fff;font-size:.85rem;opacity:.85}
+  .boton-acerca{font:inherit;font-size:.85rem;background:transparent;color:#fff;border:0;cursor:pointer;
+                padding:.2rem .5rem;opacity:.9;text-decoration:underline;text-underline-offset:3px}
+  .boton-acerca:hover, .boton-acerca:focus-visible{opacity:1}
+  dialog.acerca{border:0;border-radius:12px;padding:0;width:min(92vw,720px);max-height:88vh;color:var(--texto);
+                background:var(--superficie);box-shadow:0 20px 60px rgba(11,59,96,.35)}
+  dialog.acerca::backdrop{background:rgba(11,59,96,.55)}
+  dialog.acerca .contenido{padding:1.4rem 1.6rem 1rem;overflow:auto;max-height:calc(88vh - 3.2rem);font-size:.92rem;line-height:1.5}
+  dialog.acerca h2{margin:0 0 .4rem;font:700 1.25rem var(--fuente-titulos);color:var(--primario)}
+  dialog.acerca h3{margin:1.1rem 0 .3rem;font:700 .98rem var(--fuente-titulos);color:var(--primario)}
+  dialog.acerca p, dialog.acerca ul{margin:.3rem 0}
+  dialog.acerca ul{padding-left:1.2rem}
+  dialog.acerca .pie-acerca{display:flex;justify-content:flex-end;padding:.6rem 1.6rem;border-top:1px solid var(--borde)}
+  dialog.acerca .pie-acerca button{font:inherit;padding:.35rem 1rem;border-radius:6px;border:0;background:var(--primario);color:#fff;cursor:pointer}
+  .filtros{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem 1.1rem;padding:.4rem 1.25rem;background:#e9f0f6;
+           border-bottom:1px solid var(--borde);font-size:.84rem;color:var(--texto)}
+  .filtros .campo{display:flex;align-items:center;gap:.4rem;font-weight:500}
+  .filtros select, .filtros input{font:inherit;font-weight:400;padding:.2rem .4rem;border:1px solid var(--borde);border-radius:6px;
+           background:var(--superficie);color:var(--texto);max-width:14rem}
+  .filtros input[type=number]{width:4.6rem}
+  .filtros select:focus, .filtros input:focus{outline:2px solid var(--primario-2);outline-offset:0}
+  .filtros .activo{border-color:var(--primario-2);background:#fff8e6}
+  .contador-filtros{margin-left:auto;color:var(--texto-suave)}
+  #f-quitar{font:inherit;padding:.2rem .7rem;border-radius:6px;border:1px solid var(--primario);background:var(--superficie);
+            color:var(--primario);cursor:pointer}
+  #f-quitar:hover{background:var(--primario);color:#fff}
+  .filtro{display:flex;align-items:center;gap:.6rem;margin-left:auto;font-size:.88rem}
+  .filtro input[type=range]{width:220px;accent-color:var(--acento)}
+  .filtro output{font-weight:600;min-width:7ch}
+
+  main{position:relative;display:grid;grid-template-columns:1fr var(--panel-ancho);min-height:0}
+  #mapa{height:100%;background:#cfe3f1}
+  .leaflet-container{font-family:var(--fuente-texto)}
+  .leaflet-pane.leaflet-etiquetas-pane{pointer-events:none}
+  .marca-ciudad{background:var(--acento);color:var(--primario);border:2px solid #fff;border-radius:50%;
+                display:grid;place-items:center;font:700 12px var(--fuente-texto);
+                box-shadow:0 2px 6px rgba(11,59,96,.45)}
+  .marca-ciudad.activa{background:var(--primario);color:#fff}
+  .marca-ciudad.resaltada{transform:scale(1.35);box-shadow:0 0 0 4px rgba(229,168,35,.65),0 2px 8px rgba(11,59,96,.5);
+                          transition:transform .12s}
+  .leaflet-tooltip.etiqueta-resaltado{font:600 12px var(--fuente-texto);color:var(--primario);border:0;
+                          box-shadow:0 2px 8px rgba(11,59,96,.25)}
+  .marca-ciudad.grupo{background:var(--primario-2);color:#fff;border:3px solid var(--acento);cursor:zoom-in}
+
+  aside{background:var(--superficie);border-left:1px solid var(--borde);overflow-y:auto;padding:0 1.1rem 1.1rem}
+  .buscador{position:sticky;top:0;z-index:5;background:var(--superficie);padding:.8rem 0 .7rem;margin-bottom:.4rem;
+            border-bottom:1px solid var(--borde)}
+  .buscador input{width:100%;font:inherit;padding:.5rem .75rem;border:1px solid var(--borde);border-radius:8px;background:var(--fondo)}
+  .buscador input:focus{outline:2px solid var(--primario-2);outline-offset:0;background:var(--superficie)}
+  #sugerencias{position:absolute;left:0;right:0;top:calc(100% - .3rem);margin:0;padding:.25rem 0;list-style:none;
+               background:var(--superficie);border:1px solid var(--borde);border-radius:8px;
+               box-shadow:0 8px 24px rgba(11,59,96,.15);max-height:20rem;overflow:auto}
+  #sugerencias li{padding:.4rem .75rem;cursor:pointer;display:flex;justify-content:space-between;gap:.5rem;font-size:.9rem}
+  #sugerencias li[aria-selected=true], #sugerencias li:hover{background:#eef4f9}
+  #sugerencias .tipo{color:var(--texto-suave);font-size:.75rem;white-space:nowrap}
+  #sugerencias .vacio{cursor:default}
+  .solo-lectores{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  aside h2{margin:0;font:700 1.3rem var(--fuente-titulos);color:var(--primario)}
+  aside .meta{margin:.2rem 0 1rem;color:var(--texto-suave);font-size:.88rem}
+  .cab-ciudad{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+  .cerrar-ciudad{font:inherit;font-size:.8rem;background:var(--fondo);color:var(--primario);border:1px solid var(--borde);
+    border-radius:999px;padding:.25rem .7rem;cursor:pointer;white-space:nowrap;margin-top:.2rem}
+  .cerrar-ciudad:hover,.cerrar-ciudad:focus-visible{background:var(--primario);color:#fff;border-color:var(--primario)}
+  #acerca-fuera ul{max-height:14rem;overflow:auto;font-size:.85rem}
+  .vacio{color:var(--texto-suave)}
+
+  details.impresor{border:1px solid var(--borde);border-radius:10px;margin-bottom:.6rem;background:var(--superficie);
+                   transition:box-shadow .15s}
+  details.impresor[open]{box-shadow:0 4px 14px rgba(11,59,96,.12);border-color:var(--primario-2)}
+  details.impresor.seleccionada{border-color:var(--acento);box-shadow:0 0 0 3px rgba(229,168,35,.35)}
+
+  details.impresor{border-left-width:6px}
+  details.impresor[data-genero=mujer]{border-left-color:var(--gen-mujer);background:var(--gen-mujer-suave)}
+  details.impresor[data-genero=varon]{border-left-color:var(--gen-varon)}
+  details.impresor[data-genero=otro]{border-left-color:var(--gen-otro);background:var(--gen-otro-suave)}
+  details.impresor[data-genero=sd]{border-left-style:dashed;border-left-color:var(--gen-sd)}
+  .genero{display:inline-block;font-size:.72rem;font-weight:600;padding:.05rem .45rem;border-radius:999px;
+          margin-left:.4rem;vertical-align:middle;white-space:nowrap}
+  .genero.mujer{background:var(--gen-mujer);color:#fff}
+  .genero.varon{background:#eef1f4;color:#4b5866}
+  .genero.otro{background:var(--gen-otro);color:#fff}
+  .genero.sd{background:transparent;color:var(--texto-suave);border:1px dashed var(--gen-sd)}
+  .genero.compania{background:var(--gen-compania);color:#fff}
+  details.impresor[data-genero=compania]{border-left-color:var(--gen-compania);background:var(--gen-compania-suave)}
+  table.impresores tr[data-genero=compania] td:first-child{box-shadow:inset 6px 0 0 var(--gen-compania)}
+  table.impresores tbody tr[data-genero=compania] td{background:var(--gen-compania-suave)}
+  table.impresores tr[data-genero=compania] .chip{background:#fff}
+
+  .ficha figure.de-biblio img, .celda-nombre img.de-biblio{outline:3px solid var(--acento);outline-offset:-3px}
+  .sello-biblio{display:inline-block;margin-left:.3rem;padding:0 .35rem;border-radius:999px;background:var(--acento);
+                color:var(--primario);font-weight:600;font-size:.68rem}
+  .leyenda{display:flex;flex-wrap:wrap;gap:.35rem .25rem;align-items:center;font-size:.78rem;color:var(--texto-suave);margin:-.4rem 0 .9rem}
+  .leyenda .genero{margin-left:0}
+  details.impresor summary{cursor:pointer;padding:.65rem .85rem;list-style:none;display:flex;
+                           justify-content:space-between;align-items:center;gap:.6rem;font-weight:600}
+  details.impresor summary::-webkit-details-marker{display:none}
+  details.impresor summary::after{content:"";width:.5rem;height:.5rem;border-right:2px solid var(--primario-2);
+                                  border-bottom:2px solid var(--primario-2);transform:rotate(45deg);flex:none;transition:transform .15s}
+  details.impresor[open] summary::after{transform:rotate(-135deg)}
+  summary .fechas{margin-left:auto;color:var(--texto-suave);font-weight:400;font-size:.85rem;white-space:nowrap}
+  .ficha{padding:0 .85rem .9rem;display:grid;gap:.6rem;font-size:.92rem}
+  .ficha .imgs{display:flex;gap:.5rem;flex-wrap:wrap}
+  .ficha figure{margin:0;flex:1 1 140px}
+  .ficha img{width:100%;max-height:200px;object-fit:contain;background:var(--fondo);border-radius:6px;border:1px solid var(--borde)}
+  .ficha figcaption{font-size:.75rem;color:var(--texto-suave);text-align:center;margin-top:.2rem}
+  .nota{font-size:.8rem;color:var(--texto-suave)}
+  .datos{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.25rem .6rem}
+  .datos dt{font-weight:600}
+  .datos dd{margin:0}
+  .enlaces{display:flex;gap:.9rem;flex-wrap:wrap}
+
+  #tabla{overflow:auto;background:var(--fondo);padding:1rem 1.25rem;min-height:0}
+
+  body.modo-tabla main, body.modo-galeria main{grid-template-columns:1fr;grid-template-rows:1fr}
+  body.modo-tabla.ficha-abierta main{grid-template-columns:1fr var(--panel-ancho)}
+  body.modo-tabla #tabla{grid-column:1;grid-row:1}
+  #ficha-lista{grid-column:2;grid-row:1;background:var(--superficie);border-left:1px solid var(--borde);overflow-y:auto;padding:1rem 1.1rem}
+  #ficha-lista .cabecera-ficha{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.4rem}
+  #ficha-lista h2{margin:0;font:700 1.25rem var(--fuente-titulos);color:var(--primario);flex:1}
+  #ficha-lista .cerrar{font:inherit;font-size:1.3rem;line-height:1;background:none;border:0;cursor:pointer;color:var(--texto-suave);padding:.1rem .3rem}
+  #ficha-lista .cerrar:hover{color:var(--primario)}
+  #ficha-lista .ficha{padding:0}
+  #ficha-lista .lugares li{margin:.15rem 0}
+  #ficha-lista .lugares{margin:0;padding-left:1rem}
+  table.impresores tbody tr{cursor:pointer}
+  table.impresores tbody tr:focus-visible{outline:2px solid var(--primario-2);outline-offset:-2px}
+  table.impresores tbody tr.seleccionada td{background:#fff4d6 !important}
+  body.modo-tabla #mapa, body.modo-tabla #lateral,
+  body.modo-tabla footer, body.modo-tabla .filtro,
+  body.modo-galeria #mapa, body.modo-galeria #lateral,
+  body.modo-galeria footer, body.modo-galeria .filtro{display:none !important}
+  body.modo-tabla, body.modo-galeria{grid-template-rows:auto auto 1fr auto}
+
+  #galeria{overflow:auto;background:var(--fondo);padding:1rem 1.25rem;min-height:0}
+  .galeria-cab{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.9rem}
+  .galeria-cab h2{margin:0;font:700 1.2rem var(--fuente-titulos);color:var(--primario)}
+  .galeria-cab .cuenta{color:var(--texto-suave);font-size:.88rem}
+  .galeria-cab .controles{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;font-size:.85rem}
+  .galeria-cab input, .galeria-cab select{font:inherit;padding:.35rem .6rem;border:1px solid var(--borde);
+    border-radius:8px;background:var(--superficie);color:var(--texto)}
+  .galeria-cab input{min-width:14rem}
+  .galeria-cab .orden button{font:inherit;padding:.3rem .7rem;border:1px solid var(--borde);background:var(--superficie);
+    color:var(--texto);cursor:pointer}
+  .galeria-cab .orden button:first-child{border-radius:8px 0 0 8px}
+  .galeria-cab .orden button:last-child{border-radius:0 8px 8px 0;border-left:0}
+  .galeria-cab .orden button[aria-pressed=true]{background:var(--primario);color:#fff;border-color:var(--primario)}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--miniatura,180px),1fr));gap:.9rem}
+  .marca{margin:0;background:var(--superficie);border:1px solid var(--borde);border-radius:10px;overflow:hidden;
+         display:flex;flex-direction:column}
+  .marca.de-biblio{border-color:var(--acento);box-shadow:0 0 0 2px rgba(229,168,35,.35)}
+  .marca button.ver{all:unset;cursor:zoom-in;display:block;background:var(--fondo);aspect-ratio:1/1}
+  .marca button.ver:focus-visible{outline:3px solid var(--primario-2);outline-offset:-3px}
+  .marca img{width:100%;height:100%;object-fit:contain;display:block}
+  .marca .pie{padding:.5rem .6rem .6rem;font-size:.8rem;display:grid;gap:.25rem}
+  .marca .pie strong{font-size:.82rem;line-height:1.25;word-break:break-word}
+  .marca .pie a, .marca .pie button.persona{color:var(--primario-2);font-size:.78rem}
+  .marca .pie a.enlace-opac{font-weight:400}
+  .marca .pie .licencia{color:var(--texto-suave);font-size:.78rem}
+  .marca .pie button.persona{all:unset;cursor:pointer;color:var(--primario-2);text-decoration:underline;font-size:.78rem}
+  .cargar-mas{display:block;margin:1.2rem auto;font:inherit;padding:.5rem 1.2rem;border-radius:999px;border:0;
+              background:var(--primario);color:#fff;cursor:pointer}
+  dialog.visor{border:0;border-radius:12px;padding:0;max-width:min(92vw,1100px);max-height:92vh;background:var(--superficie)}
+  dialog.visor{background:#f4ecd8}
+  dialog.visor::backdrop{background:rgba(94,66,38,.82)}
+  dialog.visor img{display:block;max-width:100%;max-height:78vh;margin:auto;background:#efe4c8}
+  dialog.visor .info{background:#f4ecd8;color:#3b2a1a}
+  dialog.visor .info{padding:.7rem 1rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;font-size:.88rem}
+  dialog.visor .escenario{position:relative;background:#efe4c8;min-height:40vh;display:grid;place-items:center;padding:0 3.6rem}
+  dialog.visor .flecha-visor{position:absolute;top:50%;transform:translateY(-50%);width:2.6rem;height:2.6rem;border-radius:50%;
+    border:0;background:rgba(59,42,26,.6);color:#fff;font-size:1.7rem;line-height:1;cursor:pointer;display:grid;place-items:center}
+  dialog.visor .flecha-visor:hover, dialog.visor .flecha-visor:focus-visible{background:rgba(59,42,26,.85)}
+  dialog.visor .flecha-visor:disabled{opacity:.25;cursor:default}
+  dialog.visor .anterior{left:.6rem}
+  dialog.visor .siguiente{right:.6rem}
+  dialog.visor .datos-visor{display:flex;flex-direction:column;gap:.15rem;flex:1;min-width:16rem}
+  dialog.visor #visor-detalle{color:#6b5640;font-size:.82rem}
+  dialog.visor .enlaces-visor{display:flex;gap:1rem;flex-wrap:wrap}
+  dialog.visor .contador{color:#6b5640;font-size:.82rem;white-space:nowrap}
+  dialog.visor .info button{margin-left:auto;font:inherit;padding:.3rem .8rem;border-radius:6px;border:1px solid var(--borde);
+                            background:var(--fondo);cursor:pointer}
+  .tabla-cab{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem}
+  .tabla-cab h2{margin:0;font:700 1.2rem var(--fuente-titulos);color:var(--primario)}
+  .tabla-cab .cuenta{color:var(--texto-suave);font-size:.88rem}
+  .tabla-cab input[type=search]{margin-left:auto;min-width:16rem;padding:.45rem .7rem;border:1px solid var(--borde);
+                   border-radius:8px;font:inherit;background:var(--superficie)}
+  .tabla-cab input[type=search]:focus{outline:2px solid var(--primario-2);outline-offset:0}
+  table.impresores{width:100%;border-collapse:separate;border-spacing:0;background:var(--superficie);
+                   border:1px solid var(--borde);border-radius:10px;overflow:hidden;font-size:.9rem}
+  table.impresores th{position:sticky;top:0;background:var(--primario);color:#fff;text-align:left;
+                      font-weight:600;padding:0;white-space:nowrap;z-index:1}
+  table.impresores th button{all:unset;cursor:pointer;display:block;padding:.6rem .75rem;width:100%;box-sizing:border-box}
+  table.impresores th button:focus-visible{outline:2px solid var(--acento);outline-offset:-2px}
+  table.impresores th[aria-sort=ascending] button::after{content:" ▲";font-size:.7em}
+  table.impresores th[aria-sort=descending] button::after{content:" ▼";font-size:.7em}
+  table.impresores td{padding:.55rem .75rem;border-top:1px solid var(--borde);vertical-align:middle}
+  table.impresores tbody tr:nth-child(even) td{background:#f8fafc}
+  table.impresores tbody tr:hover td{background:#eef4f9}
+  table.impresores tr[data-genero=mujer] td:first-child{box-shadow:inset 6px 0 0 var(--gen-mujer)}
+  table.impresores tbody tr[data-genero=mujer] td{background:var(--gen-mujer-suave)}
+  table.impresores tr[data-genero=varon] td:first-child{box-shadow:inset 6px 0 0 var(--gen-varon)}
+  table.impresores tr[data-genero=otro]  td:first-child{box-shadow:inset 6px 0 0 var(--gen-otro)}
+  table.impresores tbody tr[data-genero=otro]  td{background:var(--gen-otro-suave)}
+  table.impresores td:first-child{padding-left:1rem}
+  table.impresores tr[data-genero=mujer] .chip, table.impresores tr[data-genero=otro] .chip{background:#fff}
+  .celda-nombre{display:flex;align-items:center;gap:.6rem;font-weight:600}
+  .celda-nombre img{width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--borde);flex:none;background:var(--fondo)}
+  .celda-nombre .sin-img{width:40px;height:40px;border-radius:6px;background:var(--fondo);border:1px dashed var(--borde);flex:none}
+  .chip{all:unset;cursor:pointer;display:inline-block;margin:.1rem .25rem .1rem 0;padding:.1rem .5rem;border-radius:999px;
+        background:#e7eff6;color:var(--primario);font-size:.82rem}
+  .chip:hover,.chip:focus-visible{background:var(--primario-2);color:#fff}
+  .sd{color:var(--texto-suave);font-style:italic}
+  .aviso-faltan{margin:0;padding:.35rem .6rem;border-radius:6px;background:#fdf6e3;border:1px dashed var(--acento);
+                font-size:.8rem;color:#6b5a2e}
+  .aviso-faltan a{color:#8a5a00}
+  .tabla-cab .descargar{font:inherit;font-size:.85rem;padding:.3rem .8rem;border-radius:6px;border:1px solid var(--primario);
+                        background:var(--superficie);color:var(--primario);cursor:pointer}
+  .tabla-cab .descargar:hover{background:var(--primario);color:#fff}
+  .solo-faltantes{display:flex;align-items:center;gap:.35rem;font-size:.85rem;color:var(--texto-suave);cursor:pointer;margin-left:auto}
+  .solo-faltantes + input[type=search]{margin-left:0 !important}
+  .solo-faltantes input{margin:0;accent-color:var(--primario)}
+  a.faltante{color:var(--texto-suave);text-decoration:none;border-bottom:1px dashed var(--gen-sd);padding:0 .3rem}
+  a.faltante:hover, a.faltante:focus-visible{color:var(--primario-2);border-bottom-color:var(--primario-2)}
+  .celda-ocupacion{max-width:18rem;font-size:.85rem}
+
+  footer{height:var(--linea-alto);background:var(--superficie);border-top:1px solid var(--borde);
+         display:flex;flex-direction:column;min-height:0;position:relative}
+  footer > .tirador, footer > .linea-barra{flex:none}
+  .tirador{height:10px;cursor:ns-resize;display:grid;place-items:center;background:var(--fondo);touch-action:none}
+  .tirador::before{content:"";width:48px;height:4px;border-radius:2px;background:var(--borde)}
+  .tirador:hover::before,.tirador:focus-visible::before{background:var(--primario-2)}
+  .tirador:focus-visible{outline:2px solid var(--primario-2);outline-offset:-2px}
+  .linea-barra{display:flex;align-items:center;gap:.5rem;padding:.35rem 1rem;border-bottom:1px solid var(--borde)}
+  .linea-barra h3{margin:0;font:700 .95rem var(--fuente-titulos);color:var(--primario)}
+  .linea-barra .acciones{margin-left:auto;display:flex;gap:.3rem}
+  .linea-barra button{background:var(--fondo);border:1px solid var(--borde);color:var(--texto);
+                      border-radius:6px;padding:.2rem .6rem;cursor:pointer;font-size:.82rem}
+  .linea-barra button:hover{border-color:var(--primario-2);color:var(--primario-2)}
+  .linea-barra button.zoom{width:1.9rem;padding:.2rem 0;font-weight:700}
+  #linea{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:var(--superficie)}
+
+  #linea::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.2;
+     filter: sepia(10) hue-rotate(20deg) saturate(3);
+    background:url("https://commons.wikimedia.org/wiki/Special:FilePath/Bookprinting_and_bookselling_1499.jpg?width=1600")
+               center 35% / cover no-repeat}
+  #linea .histropedia-container{z-index:1}
+  .credito-fondo{position:absolute;right:.5rem;bottom:.35rem;z-index:2;font-size:.7rem;color:var(--texto-suave);
+                 background:rgba(255,255,255,.8);padding:.1rem .4rem;border-radius:4px;text-decoration:none}
+  .credito-fondo:hover{color:var(--primario-2)}
+  .linea-barra button.plegar{background:var(--primario);color:#fff;border-color:var(--primario);font-weight:600}
+  .linea-barra button.plegar:hover{background:var(--primario-2);color:#fff}
+  .plegar .flecha{display:inline-block;transition:transform .2s}
+  body.linea-plegada .plegar .flecha{transform:rotate(180deg)}
+
+  body.linea-plegada footer{height:auto}
+  body.linea-plegada #linea, body.linea-plegada .tirador,
+  body.linea-plegada .zoom, body.linea-plegada #ver-periodo{display:none}
+  body.linea-plegada .linea-barra{border-bottom:0}
+
+  body.modo-linea{grid-template-columns:1fr var(--panel-ancho);grid-template-rows:auto auto 1fr auto}
+  body.modo-linea .creditos{grid-column:1 / -1;grid-row:4}
+  body.modo-linea .cabecera, body.modo-linea .barras{grid-column:1 / -1}
+  body.modo-linea main{grid-column:2;grid-row:3;grid-template-columns:1fr}
+  body.modo-linea #mapa{display:none}
+  body.modo-linea footer{grid-column:1;grid-row:3;height:auto;border-top:0}
+  body.modo-linea #linea{display:block}
+  body.modo-linea .tirador, body.modo-linea .plegar{display:none}
+  .filtro-lugar{display:none;align-items:center;gap:.4rem;font-size:.85rem;color:var(--texto-suave);margin-left:.75rem}
+  body.modo-linea .filtro-lugar{display:flex}
+  .filtro-lugar select{font:inherit;color:var(--texto);padding:.25rem .5rem;border:1px solid var(--borde);
+                       border-radius:6px;background:var(--superficie);max-width:16rem}
+  .filtro-lugar select:focus{outline:2px solid var(--primario-2);outline-offset:0}
+  #linea-aviso{position:absolute;inset:0;z-index:1;display:grid;place-items:center;color:var(--texto-suave);pointer-events:none}
+
+  .creditos{grid-column:1 / -1;background:var(--superficie);border-top:1px solid var(--borde);color:var(--texto-suave);
+            font-size:11px;line-height:1.3;padding:3px 12px;display:flex;flex-wrap:wrap;align-items:center;
+            justify-content:center;gap:2px 8px}
+  .creditos a{color:var(--texto-suave)}
+  .creditos img{display:block;height:15px;width:auto}
+  .creditos .cc img{height:13px}
+  .creditos .fuentes{display:flex;gap:8px;align-items:center}
+  .creditos .logo-texto{font-size:9px;padding:1px 4px;border-width:1px}
+
+  @media (max-width:800px){
+    body.modo-linea{grid-template-columns:1fr;grid-template-rows:auto auto 60vh auto auto}
+    body.modo-linea .creditos{grid-row:5}
+    body.modo-linea footer{grid-column:1;grid-row:3}
+    body.modo-linea main{grid-column:1;grid-row:4}
+    body{overflow:auto;height:auto;grid-template-rows:auto auto auto auto auto}
+    main{grid-template-columns:1fr;grid-template-rows:55vh auto}
+    aside{border-left:0;border-top:1px solid var(--borde)}
+    .filtro{margin-left:0}
+    .logos{--logo-alto:30px}
+  }
+</style>
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="logos">
+    <a href="https://biblio.unlp.edu.ar/" target="_blank" rel="noopener" title="Biblioteca Pública de la UNLP" aria-label="Ir al sitio de la Biblioteca Pública de la UNLP">
+      <img class="logo-biblio" src="https://biblio.unlp.edu.ar/wp-content/uploads/2025/11/cropped-logo-biblioteca-unlp-1.png"
+           data-alternativa="logos/biblioteca-unlp.png"
+           data-texto="Biblioteca Pública UNLP" alt="Biblioteca Pública de la Universidad Nacional de La Plata">
+    </a>
+    <span class="sep" aria-hidden="true"></span>
+    <a class="enlace-wiki" href="https://meta.wikimedia.org/wiki/Wikimedistas_de_la_Universidad_Nacional_de_La_Plata" target="_blank" rel="noopener"
+       title="Wikimedistas de la Universidad Nacional de La Plata" aria-label="Ir a la página de Wikimedistas de la UNLP en Meta-Wiki">
+            <img class="logo-wiki" src="https://commons.wikimedia.org/wiki/Special:FilePath/WikiUNLP-Logo_secundario_BN_02.png?width=500"
+           data-alternativa="logos/wikimedistas-unlp.png"
+           data-texto="Wikimedistas UNLP" alt="Wikimedistas de la Universidad Nacional de La Plata">
+    </a>
+  </div>
+  <div class="titulo">
+    <h1>La imprenta antigua en la Biblioteca Pública</h1>
+    <p>Impresores, talleres y marcas del siglo XVI a partir de Wikidata</p>
+  </div>
+</header>
+
+<div class="barras">
+<div class="barra">
+  <nav class="vistas" aria-label="Vistas">
+    <button type="button" data-vista="fichas" aria-pressed="true">Mapa</button>
+    <button type="button" data-vista="linea" aria-pressed="false">Línea de tiempo</button>
+    <button type="button" data-vista="tabla" aria-pressed="false">Lista de impresores</button>
+    <button type="button" data-vista="galeria" aria-pressed="false">Marcas de impresores</button>
+  </nav>
+  <button type="button" class="boton-acerca" id="abrir-acerca" aria-haspopup="dialog">ⓘ Acerca de</button>
+</div>
+<div class="filtros" role="group" aria-label="Filtros">
+  <span class="campo">Período
+    <input type="number" id="f-desde" aria-label="Desde el año" inputmode="numeric"> –
+    <input type="number" id="f-hasta" aria-label="Hasta el año" inputmode="numeric"></span>
+  <label class="campo">Ciudad <select id="f-ciudad"><option value="">Todas</option></select></label>
+  <label class="campo">Persona o compañía <select id="f-genero">
+    <option value="">Todos</option>
+    <optgroup label="Personas"><option value="mujer">Mujeres</option><option value="varon">Varones</option></optgroup>
+    <option value="compania">Compañías</option>
+  </select></label>
+  <label class="campo">Ocupación <select id="f-ocupacion"><option value="">Todas</option></select></label>
+  <span class="contador-filtros" id="f-contador" aria-live="polite"></span>
+  <button type="button" id="f-quitar" hidden>Quitar filtros</button>
+</div>
+</div>
+
+<main>
+  <div id="mapa" role="region" aria-label="Mapa de ciudades"></div>
+  <aside id="lateral">
+    <div class="buscador" role="search">
+      <label for="buscar-mapa" class="solo-lectores">Buscar impresor o ciudad</label>
+      <input id="buscar-mapa" type="search" placeholder="Buscar impresor o ciudad…" autocomplete="off"
+             role="combobox" aria-expanded="false" aria-controls="sugerencias" aria-autocomplete="list">
+      <ul id="sugerencias" role="listbox" hidden></ul>
+    </div>
+    <div id="panel" aria-live="polite">
+      <p class="vacio">Cargando datos de Wikidata…</p>
+    </div>
+  </aside>
+  <section id="galeria" hidden aria-label="Marcas de impresores">
+    <p class="vacio">Cargando imágenes de Wikimedia Commons…</p>
+  </section>
+  <aside id="ficha-lista" hidden aria-label="Ficha" aria-live="polite"></aside>
+  <section id="tabla" hidden aria-label="Lista de impresores">
+    <p class="vacio">Cargando datos de Wikidata…</p>
+  </section>
+</main>
+
+<dialog class="acerca" id="acerca" aria-labelledby="acerca-titulo">
+  <div class="contenido">
+    <h2 id="acerca-titulo">Acerca de este sitio</h2>
+    <p>Este sitio es una aplicación web interactiva que reúne a los impresores, talleres y compañías tipográficas del siglo XVI presentes en las colecciones de las Salas Museo, Farini y Costa Álvarez de la Biblioteca Pública de la Universidad Nacional de La Plata. Muestra dónde y cuándo trabajaron, y las marcas de impresor que se conservan en la Biblioteca. Lo desarrollan la Biblioteca y Wikimedistas de la Universidad Nacional de La Plata.</p>
+
+    <h3>Qué se muestra</h3>
+    <ul>
+      <li>A partir de la base de conocimiento Wikidata y del repositorio Wikimedia Commons, se visualiza la información sobre personas con alguna ocupación vinculada al libro (impresor, tipógrafo, editor, grabador, ilustrador, entre otras) y compañías que se encuentran en el catálogo.</li>
+      <li>Se muestran quienes estuvieron activos entre <span class="vista-desde"></span> y <span class="vista-hasta"></span>.</li>
+      <li>En el mapa y la línea de tiempo aparecen quienes tienen un lugar de trabajo con coordenadas; el resto figura en la Lista de impresores.</li>
+      <li>Marcas de impresor tomadas de ejemplares presentes en la Biblioteca Pública y disponibles en el catálogo online.</li>
+    </ul>
+
+    <h3>Cómo colaborar</h3>
+    <ul>
+      <li>Completá los datos que faltan en Wikidata: en la Lista de impresores, cada guion (—) lleva directamente al dato que falta.</li>
+      <li>Para sumar a alguien, agregá en su elemento de Wikidata la propiedad P5008 con el valor
+        <a href="https://www.wikidata.org/wiki/Q114008937" target="_blank" rel="noopener">Q114008937</a>.</li>
+      <li>Subí fotografías de marcas de impresor a la
+        <a id="acerca-categoria" target="_blank" rel="noopener">categoría de la Biblioteca en Wikimedia Commons</a>.</li>
+    </ul>
+
+    <h3>Datos y consultas</h3>
+    <p>Los datos se consultan en vivo cada vez que se abre la página. <span id="acerca-servicio">Cargando datos…</span></p>
+    <p>Ver la consulta completa en <a id="consulta-qlever" target="_blank" rel="noopener">QLever ↗</a> o en el
+      <a id="consulta-wdqs" target="_blank" rel="noopener">Wikidata Query Service ↗</a>
+      (en este último puede tardar o agotar el tiempo).</p>
+    <details id="acerca-fuera" hidden><summary></summary><ul></ul></details>
+
+    <h3>Responsables</h3>
+    <p><a href="mailto:nbuckmeier@biblio.unlp.edu.ar">Nadia Erica Buckmeier</a></p>
+    <p><a href="mailto:ndellarciprete@biblio.unlp.edu.ar">Nubia Dellarciprete</a></p>
+    <p><a href="mailto:jjcueto@biblio.unlp.edu.ar">Julian Cueto</a></p>
+
+    <h3>Licencias</h3>
+    <p>Textos y diseño: <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="license noopener">CC BY-SA 4.0</a> ·
+      Código: <a href="https://opensource.org/license/mit" target="_blank" rel="license noopener">MIT</a> ·
+      Datos: Wikidata (CC0) · Imágenes: Wikimedia Commons, con la licencia indicada en cada una.</p>
+  </div>
+  <div class="pie-acerca"><button type="button" id="cerrar-acerca">Cerrar</button></div>
+</dialog>
+
+<dialog class="visor" id="visor" aria-label="Imagen ampliada">
+  <div class="escenario">
+    <button type="button" class="flecha-visor anterior" id="visor-anterior" aria-label="Marca anterior" title="Anterior (←)">‹</button>
+    <img id="visor-img" alt="">
+    <button type="button" class="flecha-visor siguiente" id="visor-siguiente" aria-label="Marca siguiente" title="Siguiente (→)">›</button>
+  </div>
+  <div class="info">
+    <div class="datos-visor">
+      <strong id="visor-titulo"></strong>
+      <span id="visor-detalle"></span>
+      <span class="enlaces-visor">
+        <a id="visor-opac" target="_blank" rel="noopener" hidden>Ver en el catálogo de la Biblioteca ↗</a>
+        <a id="visor-enlace" target="_blank" rel="noopener">Ver en Wikimedia Commons ↗</a>
+      </span>
+    </div>
+    <span class="contador" id="visor-contador"></span>
+    <button type="button" id="visor-cerrar">Cerrar</button>
+  </div>
+</dialog>
+
+<footer id="pie">
+  <div class="tirador" id="tirador" role="separator" aria-orientation="horizontal" tabindex="0"
+       aria-label="Arrastrá para cambiar la altura de la línea de tiempo (o usá las flechas)"></div>
+  <div class="linea-barra">
+    <h3 id="linea-titulo">Línea de tiempo · todos los impresores</h3>
+    <div class="acciones">
+      <button type="button" id="ver-todos" hidden>Ver todos</button>
+      <button type="button" id="zoom-menos" class="zoom" title="Alejar (ver más años)" aria-label="Alejar">−</button>
+      <button type="button" id="zoom-mas" class="zoom" title="Acercar (ver menos años)" aria-label="Acercar">+</button>
+      <button type="button" id="ver-periodo" title="Mostrar todos los impresores de la línea">Ver todo el período</button>
+      <button type="button" id="linea-plegar" class="plegar" aria-expanded="true" aria-controls="linea">
+        <span class="flecha" aria-hidden="true">▾</span> <span class="texto">Ocultar</span></button>
+    </div>
+  </div>
+  <div id="linea"><div id="linea-aviso">Cargando línea de tiempo…</div>
+    <a class="credito-fondo" href="https://commons.wikimedia.org/wiki/File:Bookprinting_and_bookselling_1499.jpg"
+       target="_blank" rel="noopener" title="Imprenta y librería, grabado de 1499 (Wikimedia Commons, dominio público)">Imagen: imprenta y librería, 1499 · Commons</a></div>
+</footer>
+
+<div class="creditos">
+  <a class="cc" href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="license noopener"
+     title="Creative Commons Atribución-CompartirIgual 4.0 Internacional">
+    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/CC_BY-SA_icon.svg?width=88" alt="Licencia CC BY-SA 4.0" data-texto="CC BY-SA 4.0"></a>
+  <span>2026 Biblioteca Pública y Wikimedistas de la Universidad Nacional de La Plata ·
+    Textos y diseño: <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="license noopener">CC BY-SA 4.0</a> ·
+    Código: <a href="https://opensource.org/license/mit" target="_blank" rel="license noopener">MIT</a> ·
+    Datos: Wikidata (CC0) · Imágenes: Wikimedia Commons (licencia en cada una)</span>
+  <span class="fuentes">
+    <a href="https://www.wikidata.org" target="_blank" rel="noopener" title="Wikidata">
+      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Wikidata-logo-en.svg?width=120" alt="Wikidata" data-texto="Wikidata"></a>
+    <a href="https://commons.wikimedia.org" target="_blank" rel="noopener" title="Wikimedia Commons">
+      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Commons-logo-en.svg?width=120" alt="Wikimedia Commons" data-texto="Wikimedia Commons"></a>
+  </span>
+</div>
+
+<script>
+
+const OCUPACIONES_LISTA = `wd:Q175151 wd:Q250867 wd:Q354034 wd:Q611644 wd:Q644687 wd:Q901222 wd:Q998550 wd:Q1028181 wd:Q1229025 wd:Q1437754 wd:Q1607826 wd:Q1636680 wd:Q2516866 wd:Q3362826 wd:Q10527030 wd:Q11569986 wd:Q13418253 wd:Q14972848 wd:Q15991187 wd:Q16267607 wd:Q20826540 wd:Q24205162 wd:Q40881196 wd:Q65123129 wd:Q36180 wd:Q36834 wd:Q43845 wd:Q215536 wd:Q19507792`;
+const PROYECTO = `{ ?item wdt:P6104 wd:Q114008937 } UNION { ?item wdt:P5008 wd:Q114008937 }`;
+
+const SPARQL_CANDIDATOS = `
+SELECT ?item (GROUP_CONCAT(DISTINCT STR(?tipo); separator=" ") AS ?tipos)
+             (GROUP_CONCAT(DISTINCT STR(?ocupacion); separator=" ") AS ?ocupaciones) WHERE {
+  ${PROYECTO}
+  OPTIONAL { ?item wdt:P31 ?tipo }
+  OPTIONAL { ?item wdt:P106 ?ocupacion }
+} GROUP BY ?item`;
+const SET_OCUPACIONES = new Set(OCUPACIONES_LISTA.match(/Q\d+/g));
+
+const ANIO_DESDE = 1400, ANIO_HASTA = 1699;
+const SPARQL_EN_PERIODO = `
+SELECT DISTINCT ?item WHERE {
+  ${PROYECTO}
+  { ?item wdt:P569|wdt:P570|wdt:P571|wdt:P576|wdt:P2031|wdt:P2032|wdt:P1317 ?fecha }
+  UNION
+  { ?item p:P937 ?declaracion . ?declaracion pq:P580|pq:P582|pq:P585 ?fecha }
+  FILTER(isLiteral(?fecha) && YEAR(?fecha) >= ${ANIO_DESDE} && YEAR(?fecha) <= ${ANIO_HASTA})
+}`;
+
+const COMPANIA = 'Q783794', NIVELES_MAX = 8;
+const sparqlSuperclases = tipos => `
+SELECT ?tipo ?super WHERE {
+  VALUES ?tipo { ${tipos.map(t => 'wd:' + t).join(' ')} }
+  ?tipo wdt:P279 ?super .
+}`;
+async function tiposQueSonCompania(tipos){
+  const padres = new Map(), vistos = new Set(tipos);
+  let frontera = tipos.filter(t => t !== COMPANIA);
+  for (let nivel = 0; nivel < NIVELES_MAX && frontera.length; nivel++){
+    const nuevos = new Set();
+    for (let i = 0; i < frontera.length; i += 200){
+      for (const f of await consultar(sparqlSuperclases(frontera.slice(i, i + 200)))){
+        const t = qid(f.tipo.value), sup = qid(f.super.value);
+        if (!padres.has(t)) padres.set(t, new Set());
+        padres.get(t).add(sup);
+        if (!vistos.has(sup)){ vistos.add(sup); if (sup !== COMPANIA) nuevos.add(sup); }
+      }
+    }
+    frontera = [...nuevos];
+  }
+
+  const memo = new Map();
+  const llega = (t, camino = new Set()) => {
+    if (t === COMPANIA) return true;
+    if (memo.has(t)) return memo.get(t);
+    if (camino.has(t)) return false;
+    camino.add(t);
+    const r = [...(padres.get(t) || [])].some(p => llega(p, camino));
+    memo.set(t, r);
+    return r;
+  };
+  return new Set(tipos.filter(t => llega(t)));
+}
+
+const FILTRO = '@@FILTRO@@';
+let FILTRO_ACTUAL = '';
+const COMPANIAS = new Set();
+
+const SPARQL = `
+SELECT ?item ?itemLabel ?lugar ?lugarLabel ?coord ?img ?sig ?logotipo ?inicio ?fin ?fecha WHERE {
+  ${FILTRO}
+  ?item p:P937 ?st .
+  ?st ps:P937 ?lugar .
+  ?lugar wdt:P625 ?coord .
+  OPTIONAL { ?st pq:P580 ?inicio }
+  OPTIONAL { ?st pq:P582 ?fin }
+  OPTIONAL { ?st pq:P585 ?fecha }
+  OPTIONAL { ?item wdt:P154 ?logotipo }
+  OPTIONAL { ?item wdt:P18 ?img }
+  OPTIONAL { ?item wdt:P109 ?sig }
+  OPTIONAL { ?item rdfs:label ?iEs  FILTER(LANG(?iEs)  = "es") }
+  OPTIONAL { ?item rdfs:label ?iMul FILTER(LANG(?iMul) = "mul") }
+  OPTIONAL { ?item rdfs:label ?iEn  FILTER(LANG(?iEn)  = "en") }
+  OPTIONAL { ?lugar rdfs:label ?lEs  FILTER(LANG(?lEs)  = "es") }
+  OPTIONAL { ?lugar rdfs:label ?lMul FILTER(LANG(?lMul) = "mul") }
+  OPTIONAL { ?lugar rdfs:label ?lEn  FILTER(LANG(?lEn)  = "en") }
+  BIND(COALESCE(?iEs, ?iMul, ?iEn, STRAFTER(STR(?item), "entity/")) AS ?itemLabel)
+  BIND(COALESCE(?lEs, ?lMul, ?lEn, STRAFTER(STR(?lugar), "entity/")) AS ?lugarLabel)
+}`;
+
+const SPARQL_PERSONAS = `
+SELECT ?item (SAMPLE(COALESCE(?nomEs, ?nomMul, ?nomEn)) AS ?itemLabel)
+       (GROUP_CONCAT(DISTINCT STR(?im); separator="|") AS ?imgs)
+       (GROUP_CONCAT(DISTINCT STR(?fi); separator="|") AS ?sigs)
+       (GROUP_CONCAT(DISTINCT STR(?lo); separator="|") AS ?logos)
+       (MIN(?fu) AS ?fundacion) (MAX(?di) AS ?disolucion)
+       (SAMPLE(?gen) AS ?genero) (SAMPLE(COALESCE(?genEs, ?genEn)) AS ?generoLabel)
+       (MIN(?a) AS ?ini) (MAX(?b) AS ?fin) (MIN(?f) AS ?flor) (MIN(?n) AS ?nac) (MAX(?m) AS ?muerte)
+       (SAMPLE(?ln) AS ?lugarNac) (SAMPLE(COALESCE(?lnEs, ?lnMul, ?lnEn)) AS ?lugarNacLabel) (SAMPLE(?wp) AS ?wiki) WHERE {
+  ${FILTRO}
+  OPTIONAL { ?item rdfs:label ?nomEs  FILTER(LANG(?nomEs)  = "es") }
+  OPTIONAL { ?item rdfs:label ?nomMul FILTER(LANG(?nomMul) = "mul") }
+  OPTIONAL { ?item rdfs:label ?nomEn  FILTER(LANG(?nomEn)  = "en") }
+  OPTIONAL { ?item wdt:P18 ?im }
+  OPTIONAL { ?item wdt:P109 ?fi }
+  OPTIONAL { ?item wdt:P154 ?lo }
+  OPTIONAL { ?item wdt:P571 ?fu }
+  OPTIONAL { ?item wdt:P576 ?di }
+  OPTIONAL { ?item wdt:P21 ?gen .
+    OPTIONAL { ?gen rdfs:label ?genEs FILTER(LANG(?genEs) = "es") }
+    OPTIONAL { ?gen rdfs:label ?genEn FILTER(LANG(?genEn) = "en") } }
+  OPTIONAL { ?item wdt:P2031 ?a }
+  OPTIONAL { ?item wdt:P2032 ?b }
+  OPTIONAL { ?item wdt:P1317 ?f }
+  OPTIONAL { ?item wdt:P569 ?n }
+  OPTIONAL { ?item wdt:P570 ?m }
+  OPTIONAL { ?item wdt:P19|wdt:P740 ?ln .
+    OPTIONAL { ?ln rdfs:label ?lnEs  FILTER(LANG(?lnEs)  = "es") }
+    OPTIONAL { ?ln rdfs:label ?lnMul FILTER(LANG(?lnMul) = "mul") }
+    OPTIONAL { ?ln rdfs:label ?lnEn  FILTER(LANG(?lnEn)  = "en") } }
+  OPTIONAL { ?wp schema:about ?item ;
+                 schema:isPartOf <https://es.wikipedia.org/> . }
+} GROUP BY ?item`;
+
+const SPARQL_OCUPACIONES = `
+SELECT ?item (GROUP_CONCAT(DISTINCT ?ocLabel; separator=", ") AS ?ocupaciones)
+       (GROUP_CONCAT(DISTINCT CONCAT(STRAFTER(STR(?oc), "entity/"), "=", COALESCE(?ocEs, ?ocEn, "")); separator=";;") AS ?ocPares) WHERE {
+  ${FILTRO}
+  ?item wdt:P106|wdt:P452 ?oc .
+  BIND(EXISTS { ?item wdt:P21 ?g . VALUES ?g { wd:Q6581072 wd:Q1052281 } } AS ?esMujer)
+  OPTIONAL { ?oc wdt:P2521 ?ocFem FILTER(LANG(?ocFem) = "es") }
+  OPTIONAL { ?oc rdfs:label ?ocEs FILTER(LANG(?ocEs) = "es") }
+  OPTIONAL { ?oc rdfs:label ?ocEn FILTER(LANG(?ocEn) = "en") }
+  BIND(COALESCE(IF(?esMujer, ?ocFem, ?ocEs), ?ocEs, ?ocEn, STRAFTER(STR(?oc), "entity/")) AS ?ocLabel)
+} GROUP BY ?item`;
+
+const SERVICIOS = {
+  qlever: { nombre: 'QLever', url: 'https://qlever.cs.uni-freiburg.de/api/wikidata', espera: 30000,
+            ver: q => 'https://qlever.cs.uni-freiburg.de/wikidata/?query=' + encodeURIComponent(q) },
+  wdqs:   { nombre: 'Wikidata Query Service', url: 'https://query.wikidata.org/sparql', espera: 65000,
+            ver: q => 'https://query.wikidata.org/#' + encodeURIComponent(q) }
+};
+let SERVICIO = SERVICIOS.qlever;
+
+const PREFIJOS = `PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+`;
+const prepararConsulta = q => PREFIJOS + q.replace(FILTRO, FILTRO_ACTUAL);
+
+const consultar = (q, servicio = SERVICIO) => {
+  const control = new AbortController();
+  const reloj = setTimeout(() => control.abort(), servicio.espera);
+  return fetch(servicio.url, {
+      method: 'POST', signal: control.signal,
+      headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ query: prepararConsulta(q) })
+    })
+    .then(r => { if (!r.ok) throw new Error(`${servicio.nombre} respondió ${r.status}`); return r.json(); })
+    .then(j => j.results.bindings)
+    .catch(e => { throw e.name === 'AbortError' ? new Error(`${servicio.nombre} tardó demasiado en responder`) : e; })
+    .finally(() => clearTimeout(reloj));
+};
+
+const anio = v => { const m = v && String(v).match(/^[+-]?\d{1,4}/); return m ? parseInt(m[0], 10) : null; };
+const qid  = uri => uri.split('/').pop();
+const miniatura = (url, w = 300) => url ? `${url}?width=${w}` : null;
+const punto = wkt => {
+  const m = String(wkt).match(/point\s*\(\s*(-?[\d.]+(?:e[-+]?\d+)?)\s+(-?[\d.]+(?:e[-+]?\d+)?)\s*\)/i);
+  if (!m || /^</.test(String(wkt).trim())) return null;
+  const lon = Number(m[1]), lat = Number(m[2]);
+  return Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? [lat, lon] : null;
+};
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rango = (a, b) => a && b ? (a === b ? `${a}` : `${a}–${b}`) : a ? `desde ${a}` : b ? `hasta ${b}` : 'fechas sin registrar';
+
+document.querySelectorAll('.logos img, .creditos img').forEach(img => img.addEventListener('error', () => {
+  if (img.dataset.alternativa && img.src.indexOf(img.dataset.alternativa) === -1){ img.src = img.dataset.alternativa; return; }
+  const t = document.createElement('span'); t.className = 'logo-texto'; t.textContent = img.dataset.texto;
+  img.replaceWith(t);
+}));
+
+const PERSONAS = new Map();
+let CIUDADES = [];
+const COORD_INVALIDAS = new Map();
+
+function construir(filas, fechas, ocupaciones = []){
+  const ciudades = new Map();
+  for (const f of filas){
+    const idC = qid(f.lugar.value), idP = qid(f.item.value);
+    if (!PERSONAS.has(idP)) PERSONAS.set(idP, { id: idP, nombre: f.itemLabel.value, url: f.item.value, ciudades: new Map() });
+    const coord = punto(f.coord.value);
+    if (!coord){ console.warn('Coordenadas no válidas, se omite la ciudad', idC, f.coord.value); COORD_INVALIDAS.set(idC, f.lugarLabel.value); continue; }
+    if (!ciudades.has(idC)) ciudades.set(idC, { id: idC, nombre: f.lugarLabel.value, coord, ids: new Set() });
+    ciudades.get(idC).ids.add(idP);
+    const p = PERSONAS.get(idP);
+    p.imagen ??= f.img?.value; p.firma ??= f.sig?.value; p.logotipo ??= f.logotipo?.value;
+    if (!p.ciudades.has(idC)) p.ciudades.set(idC, []);
+    const desde = anio(f.inicio?.value) ?? anio(f.fecha?.value);
+    const per = { desde, hasta: anio(f.fin?.value) ?? (f.inicio ? null : desde) };
+    const lista = p.ciudades.get(idC);
+    if ((per.desde || per.hasta) && !lista.some(x => x.desde === per.desde && x.hasta === per.hasta)) lista.push(per);
+  }
+  for (const f of fechas){
+    const idP = qid(f.item.value);
+    if (!PERSONAS.has(idP))
+      PERSONAS.set(idP, { id: idP, nombre: f.itemLabel?.value || idP, url: f.item.value, ciudades: new Map() });
+    const p = PERSONAS.get(idP);
+    const partes = v => v ? v.split('|').filter(Boolean) : [];
+    p.archivos = { imagen: partes(f.imgs?.value), logotipo: partes(f.logos?.value), firma: partes(f.sigs?.value) };
+    p.compania = COMPANIAS.has(idP);
+    if (f.genero) p.genero = { id: qid(f.genero.value), etiqueta: f.generoLabel?.value };
+    if (f.lugarNac) p.nacimiento = { id: qid(f.lugarNac.value), nombre: f.lugarNacLabel?.value || qid(f.lugarNac.value) };
+    if (f.wiki) p.wikipedia = f.wiki.value;
+    const ini = anio(f.ini?.value), fin = anio(f.fin?.value), flor = anio(f.flor?.value);
+    const nac = anio(f.nac?.value), muerte = anio(f.muerte?.value);
+    if (ini || fin)       p.respaldo = { desde: ini ?? fin, hasta: fin ?? ini, fuente: 'periodo de actividad', frase: 'su periodo de actividad' };
+    else if (flor)        p.respaldo = { desde: flor, hasta: flor, fuente: 'floruit', frase: 'su floruit' };
+    else if (nac || muerte) p.respaldo = { desde: nac ?? muerte, hasta: muerte ?? nac, fuente: 'años de vida', frase: 'sus años de vida' };
+    else {
+      const fu = anio(f.fundacion?.value), di = anio(f.disolucion?.value);
+      if (fu || di) p.respaldo = { desde: fu ?? di, hasta: di ?? fu, fuente: 'fundación y disolución', frase: 'sus años de fundación y disolución' };
+    }
+  }
+  for (const f of ocupaciones){
+    const p = PERSONAS.get(qid(f.item.value));
+    if (!p) continue;
+    if (f.ocupaciones?.value) p.ocupaciones = f.ocupaciones.value;
+    p.ocIds = new Set();
+    for (const par of (f.ocPares?.value || '').split(';;').filter(Boolean)){
+      const [id, ...resto] = par.split('=');
+      const nombre = resto.join('=');
+      p.ocIds.add(id);
+      if (!NOMBRES_OCUPACION.has(id)) NOMBRES_OCUPACION.set(id, nombre || id);
+    }
+  }
+  CIUDADES = [...ciudades.values()].map(c => ({ ...c, impresores: [...c.ids].map(id => PERSONAS.get(id)) }));
+}
+
+const MUJER = ['Q6581072', 'Q1052281'];
+const VARON = ['Q6581097', 'Q2449503'];
+function generoDe(p){
+  if (p.compania)           return { clase: 'compania', texto: 'Compañía' };
+  const g = p.genero;
+  if (!g)                   return { clase: 'sd',    texto: 'género sin datos' };
+  if (MUJER.includes(g.id)) return { clase: 'mujer', texto: 'Impresora' };
+  if (VARON.includes(g.id)) return { clase: 'varon', texto: 'Impresor' };
+  return { clase: 'otro', texto: g.etiqueta || g.id };
+}
+
+const TEXTOS_TABLA = { mujer: 'Mujer', varon: 'Varón' };
+const chipGenero = (p, textos = {}) => { const g = generoDe(p);
+  return `<span class="genero ${g.clase}">${esc(textos[g.clase] ?? g.texto)}</span>`; };
+const leyendaGenero = (estilo = '', textos = {}) => `<div class="leyenda" ${estilo} aria-label="Referencias de color por género">
+  <span class="genero mujer">${textos.mujer ?? 'Impresora'}</span><span class="genero varon">${textos.varon ?? 'Impresor'}</span>
+  <span class="genero otro">Otra identidad</span><span class="genero compania">Compañía</span>
+  <span class="genero sd">Sin datos</span></div>`;
+
+const ORIGEN_BIBLIO = 'Q16489703';
+const ARCHIVOS_BIBLIO = new Set();
+const nombreArchivo = url => decodeURIComponent(String(url).split('/').pop().split('?')[0]).replace(/_/g, ' ');
+const esDeBiblio = url => ARCHIVOS_BIBLIO.has(nombreArchivo(url));
+const ETIQUETA_TIPO = { imagen: 'Imagen', logotipo: 'Marca de impresor', firma: 'Firma' };
+function archivosDe(p){
+  const a = p.archivos || { imagen: [p.imagen].filter(Boolean), logotipo: [p.logotipo].filter(Boolean), firma: [p.firma].filter(Boolean) };
+  const lista = [];
+  for (const tipo of ['imagen', 'logotipo', 'firma'])
+    for (const url of a[tipo] || []) lista.push({ tipo, url, biblio: esDeBiblio(url) });
+
+  return lista.sort((x, y) => (y.biblio - x.biblio));
+}
+const archivoPrincipal = p => archivosDe(p)[0]?.url || null;
+
+const API_COMMONS = 'https://commons.wikimedia.org/w/api.php';
+async function marcarOrigenBiblioteca(){
+  const nombres = [...new Set([...PERSONAS.values()].flatMap(p => archivosDe(p).map(x => nombreArchivo(x.url))))];
+  for (let i = 0; i < nombres.length; i += 50){
+    const titulos = nombres.slice(i, i + 50).map(n => 'File:' + n).join('|');
+    const url = `${API_COMMONS}?action=wbgetentities&sites=commonswiki&props=claims&format=json&origin=*&titles=${encodeURIComponent(titulos)}`;
+    try {
+      const j = await fetch(url).then(r => r.json());
+      for (const e of Object.values(j.entities || {})){
+        const decl = e.statements || e.claims || {};
+        const deBiblio = (decl.P7482 || []).some(d => d.mainsnak?.datavalue?.value?.id === ORIGEN_BIBLIO);
+        if (deBiblio && e.title) ARCHIVOS_BIBLIO.add(e.title.replace(/^File:/, ''));
+      }
+    } catch (err) { console.warn('No se pudo consultar Commons', err); }
+  }
+}
+
+function periodos(p, idC){
+  const pers = idC ? (p.ciudades.get(idC) || []) : [...p.ciudades.values()].flat();
+  return pers.length ? { lista: pers, respaldo: false } : { lista: p.respaldo ? [p.respaldo] : [], respaldo: true };
+}
+const NOMBRES_OCUPACION = new Map();
+const VISTA_DESDE = 1500, VISTA_HASTA = 1599;
+const FILTROS = { desde: VISTA_DESDE, hasta: VISTA_HASTA, ciudad: '', genero: '', ocupacion: '' };
+const filtroPeriodoActivo = () => FILTROS.desde > VISTA_DESDE || FILTROS.hasta < VISTA_HASTA;
+const enVista = (p, idC) => periodos(p, idC).lista.some(x => (x.desde ?? x.hasta) <= VISTA_HASTA && (x.hasta ?? x.desde) >= VISTA_DESDE);
+const totalVista = () => [...PERSONAS.values()].filter(p => enVista(p)).length;
+const filtrosActivos = () => filtroPeriodoActivo() || FILTROS.ciudad || FILTROS.genero || FILTROS.ocupacion;
+
+function pasaFiltros(p, idC){
+  if (FILTROS.ciudad){
+    if (idC && idC !== FILTROS.ciudad) return false;
+    if (!p.ciudades.has(FILTROS.ciudad)) return false;
+  }
+  if (FILTROS.genero && generoDe(p).clase !== FILTROS.genero) return false;
+  if (FILTROS.ocupacion && !(p.ocIds && p.ocIds.has(FILTROS.ocupacion))) return false;
+  const { lista } = periodos(p, idC);
+  if (!lista.length) return false;
+  return lista.some(x => (x.desde ?? x.hasta) <= FILTROS.hasta && (x.hasta ?? x.desde) >= FILTROS.desde);
+}
+function activo(p, y, idC){ return pasaFiltros(p, idC); }
+
+const mapa = L.map('mapa', { worldCopyJump: true, minZoom: 2, maxZoom: 18 }).setView([46, 8], 5);
+mapa.createPane('paises').style.zIndex = 250;
+mapa.createPane('etiquetas').style.zIndex = 450;
+mapa.getPane('etiquetas').classList.add('leaflet-etiquetas-pane');
+
+const DATOS = ' · Datos: <a href="https://www.wikidata.org">Wikidata</a> (CC0)';
+const CARTO_KEY = 'cb1_55o9_1_775c68bc5932450330b33751';
+const ATR_CARTO = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const carto = (estilo, extra = {}) => L.tileLayer(
+  `https://basemaps.cartocdn.com/rastertiles/${estilo}/{z}/{x}/{y}.png?key=${CARTO_KEY}`,
+  { attribution: ATR_CARTO + DATOS, maxZoom: 18, ...extra });
+const esri = s => `https://server.arcgisonline.com/ArcGIS/rest/services/${s}/MapServer/tile/{z}/{y}/{x}`;
+
+const COLORES_PAIS = ['#f3d9a4', '#bcd9c2', '#f2c4b5', '#c9d3ec', '#e8d3e6', '#d7e4a8', '#f5e3c3'];
+const URL_PAISES = 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_0_countries.geojson';
+const ESTILO_VOYAGER = `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json?key=${CARTO_KEY}`;
+const NOMBRE_ES = ['coalesce', ['get', 'name:es'], ['get', 'name_es'], ['get', 'name']];
+
+const conClave = url => (url.includes('cartocdn.com') && !url.includes('key='))
+  ? { url: url + (url.includes('?') ? '&' : '?') + 'key=' + CARTO_KEY } : { url };
+
+function estiloEnEspanol(estilo, conPaises){
+  const e = JSON.parse(JSON.stringify(estilo));
+  for (const capa of e.layers){
+    if (capa.type === 'symbol' && capa.layout && capa.layout['text-field']) capa.layout['text-field'] = NOMBRE_ES;
+  }
+  if (conPaises){
+    e.sources.paises = { type: 'geojson', data: URL_PAISES };
+    const colores = ['match', ['get', 'MAPCOLOR7']];
+    COLORES_PAIS.forEach((c, i) => colores.push(i + 1, c));
+    colores.push(COLORES_PAIS[0]);
+    const primeraEtiqueta = e.layers.findIndex(l => l.type === 'symbol');
+    const nuevas = [
+      { id: 'paises-relleno', type: 'fill', source: 'paises', paint: { 'fill-color': colores, 'fill-opacity': .75 } },
+      { id: 'paises-borde',   type: 'line', source: 'paises', paint: { 'line-color': '#6f7f91', 'line-width': .8 } }
+    ];
+    e.layers.splice(primeraEtiqueta < 0 ? e.layers.length : primeraEtiqueta, 0, ...nuevas);
+  }
+  return e;
+}
+
+const ATR_VECTOR = ATR_CARTO + ', <a href="https://www.naturalearthdata.com/">Natural Earth</a>' + DATOS;
+const fondoPolitico = L.layerGroup(), fondoVoyager = L.layerGroup();
+
+function respaldoRaster(){
+  console.warn('No se pudo usar el mapa vectorial; se usa el fondo raster de CARTO.');
+  fondoPolitico.addLayer(carto('voyager')); fondoVoyager.addLayer(carto('voyager'));
+}
+if (L.maplibreGL && window.maplibregl?.supported?.() !== false){
+  fetch(ESTILO_VOYAGER).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(estilo => {
+    fondoPolitico.addLayer(L.maplibreGL({ style: estiloEnEspanol(estilo, true),  transformRequest: conClave, attribution: ATR_VECTOR }));
+    fondoVoyager.addLayer(L.maplibreGL({  style: estiloEnEspanol(estilo, false), transformRequest: conClave, attribution: ATR_VECTOR }));
+  }).catch(respaldoRaster);
+} else respaldoRaster();
+
+const fondos = {
+  'Político (en español)': fondoPolitico,
+  'Voyager (en español)':  fondoVoyager,
+  'Claro (CARTO)':   carto('light_all'),
+  'Topográfico (Esri)': L.tileLayer(esri('World_Topo_Map'), { attribution: 'Tiles &copy; Esri, HERE, Garmin, &copy; OpenStreetMap' + DATOS, maxZoom: 18 })
+};
+fondos['Político (en español)'].addTo(mapa);
+L.control.layers(fondos, null, { position: 'topleft' }).addTo(mapa);
+
+const tamanoMarca = n => Math.round(20 + Math.sqrt(n) * 7);
+const MARCADORES = new Map();
+let resaltados = [];
+function idDeArticulo(a){
+  const id = a?.id ?? a?.data?.id ?? a?.article?.id ?? a?.article?.data?.id;
+  return id ? String(id).split('~')[0] : null;
+}
+function resaltarCiudadesDe(articulo){
+  quitarResaltado();
+  if (vistaActual !== 'fichas') return;
+  const p = PERSONAS.get(idDeArticulo(articulo));
+  if (!p) return;
+  const visibles = new Set();
+  for (const idC of p.ciudades.keys()){
+    const m = MARCADORES.get(idC);
+    if (!m) continue;
+    visibles.add(typeof capa.getVisibleParent === 'function' ? (capa.getVisibleParent(m) || m) : m);
+  }
+  let primero = true;
+  for (const v of visibles){
+    v.getElement?.()?.querySelector('.marca-ciudad')?.classList.add('resaltada');
+    v.setZIndexOffset?.(1000);
+    if (primero){ v.bindTooltip?.(esc(p.nombre), { direction: 'top', offset: [0, -14], className: 'etiqueta-resaltado' }).openTooltip?.(); primero = false; }
+    resaltados.push(v);
+  }
+}
+let tarjetaBajoMouse = null, cuadroPendiente = false;
+function alEntrarTarjeta(articulo){
+  const id = idDeArticulo(articulo);
+  if (id === tarjetaBajoMouse) return;
+  tarjetaBajoMouse = id;
+  if (cuadroPendiente) return;
+  cuadroPendiente = true;
+  requestAnimationFrame(() => {
+    cuadroPendiente = false;
+    if (tarjetaBajoMouse) resaltarCiudadesDe({ id: tarjetaBajoMouse });
+    else quitarResaltado();
+  });
+}
+function alSalirTarjeta(){
+  tarjetaBajoMouse = null;
+  if (cuadroPendiente) return;
+  cuadroPendiente = true;
+  requestAnimationFrame(() => { cuadroPendiente = false; if (!tarjetaBajoMouse) quitarResaltado(); });
+}
+function quitarResaltado(){
+  for (const v of resaltados){
+    v.getElement?.()?.querySelector('.marca-ciudad')?.classList.remove('resaltada');
+    v.setZIndexOffset?.(0);
+    v.closeTooltip?.(); v.unbindTooltip?.();
+  }
+  resaltados = [];
+}
+const capa = (typeof L.markerClusterGroup === 'function'
+  ? L.markerClusterGroup({
+      maxClusterRadius: 45, showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true,
+      iconCreateFunction: grupo => {
+        const marcas = grupo.getAllChildMarkers();
+        const n = marcas.reduce((suma, m) => suma + (m.options.cantidad || 0), 0);
+        const t = tamanoMarca(n) + 6;
+        return L.divIcon({ className: '', iconSize: [t, t],
+          html: `<div class="marca-ciudad grupo" style="width:${t}px;height:${t}px" title="${marcas.length} ciudades · ${n} impresores">${n}</div>` });
+      }
+    })
+  : L.layerGroup()).addTo(mapa);
+let ciudadActual = null;
+
+function pintarMarcadores(y){
+  capa.clearLayers();
+  MARCADORES.clear();
+  for (const c of CIUDADES){
+    const n = c.impresores.filter(p => activo(p, y, c.id)).length;
+    if (!n) continue;
+    const t = tamanoMarca(n);
+    const cls = 'marca-ciudad' + (ciudadActual?.id === c.id ? ' activa' : '');
+    const marcador = L.marker(c.coord, {
+      icon: L.divIcon({ className: '', html: `<div class="${cls}" style="width:${t}px;height:${t}px">${n}</div>`, iconSize: [t, t] }),
+      title: `${c.nombre}: ${n} impresor${n === 1 ? '' : 'es'}`, keyboard: true, cantidad: n
+    }).on('click', () => abrirCiudad(c));
+    marcador.addTo(capa);
+    MARCADORES.set(c.id, marcador);
+  }
+}
+
+const anioActual = () => 0;
+
+function abrirCiudad(c, abrirId, { mantenerLinea = false } = {}){
+  ciudadActual = c;
+  const y = anioActual();
+  const lista = c.impresores.filter(p => activo(p, y, c.id))
+    .sort((a, b) => (periodos(a, c.id).lista[0]?.desde ?? 9999) - (periodos(b, c.id).lista[0]?.desde ?? 9999));
+
+  document.getElementById('panel').innerHTML = `
+    <div class="cab-ciudad"><h2>${esc(c.nombre)}</h2>
+      <button type="button" class="cerrar-ciudad" title="Quitar la selección de la ciudad (Esc)">✕ Todas las ciudades</button></div>
+    <p class="meta">${lista.length} impresor${lista.length === 1 ? '' : 'es'} ·
+      <a href="https://www.wikidata.org/wiki/${c.id}" target="_blank" rel="noopener">${c.id}</a></p>
+    ${leyendaGenero()}
+    ${lista.map(p => {
+      const { lista: pers, respaldo } = periodos(p, c.id);
+      const txt = pers.length ? pers.map(x => rango(x.desde, x.hasta)).join('; ') + (respaldo ? ` (${pers[0].fuente})` : '') : 'fechas sin registrar';
+      return `
+      <details class="impresor" data-id="${p.id}" data-genero="${generoDe(p).clase}">
+        <summary><span>${esc(p.nombre)}${chipGenero(p)}</span><span class="fechas">${txt}</span></summary>
+        <div class="ficha">
+          <div class="imgs">
+            ${archivosDe(p).map(x => `<figure class="${x.biblio ? 'de-biblio' : ''}">
+                <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(nombreArchivo(x.url).replace(/ /g, '_'))}" target="_blank" rel="noopener">
+                <img loading="lazy" src="${miniatura(x.url)}" alt="${ETIQUETA_TIPO[x.tipo]} de ${esc(p.nombre)}"></a>
+                <figcaption>${ETIQUETA_TIPO[x.tipo]}${x.biblio ? '<span class="sello-biblio">Biblioteca Pública UNLP</span>' : ''}</figcaption></figure>`).join('')
+              || '<p class="vacio">Sin imagen, logotipo ni firma en Wikidata.</p>'}
+          </div>
+          ${avisoFaltantes(p)}
+          <dl class="datos">
+            ${p.compania ? `<dt>Tipo</dt><dd>Compañía</dd>` : `<dt>Género</dt>
+            <dd>${p.genero ? esc(p.genero.etiqueta || p.genero.id) : '<span class="sd">sin datos</span>'}</dd>`}
+            <dt>${p.compania ? 'Sector' : 'Ocupación'}</dt>
+            <dd>${p.ocupaciones ? esc(p.ocupaciones) : '<span class="sd">sin datos</span>'}</dd>
+            <dt>${p.compania ? 'Lugar de fundación' : 'Lugar de nacimiento'}</dt>
+            <dd>${p.nacimiento
+                  ? `<a href="https://www.wikidata.org/wiki/${p.nacimiento.id}" target="_blank" rel="noopener">${esc(p.nacimiento.nombre)}</a>`
+                  : '<span class="sd">sin datos</span>'}</dd>
+            <dt>Trabajó en ${esc(c.nombre)}</dt>
+            <dd>${txt}
+              ${respaldo && pers.length ? `<div class="nota">Sin fechas para esta ciudad; se muestran ${pers[0].frase}.</div>` : ''}</dd>
+            ${p.ciudades.size > 1 ? `<dt>También trabajó en</dt><dd>${[...p.ciudades.keys()].filter(k => k !== c.id)
+                .map(k => esc(CIUDADES.find(x => x.id === k)?.nombre)).join(', ')}</dd>` : ''}
+          </dl>
+          <div class="enlaces">
+            ${p.wikipedia ? `<a href="${esc(p.wikipedia)}" target="_blank" rel="noopener">Wikipedia en español ↗</a>` : ''}
+            ${enlaceWikidata(p)}
+          </div>
+        </div>
+      </details>`; }).join('')}`;
+
+  pintarMarcadores(y);
+  if (!mantenerLinea) pintarLinea(c);
+  if (abrirId) abrirFicha(abrirId);
+}
+
+function abrirFicha(idP){
+  document.querySelectorAll('details.impresor').forEach(d => {
+    const es = d.dataset.id === idP;
+    d.classList.toggle('seleccionada', es);
+    if (!es) d.open = false;
+  });
+  const d = document.querySelector(`details.impresor[data-id="${idP}"]`);
+  if (d){ d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+let linea = null, articulosActuales = [];
+const conLugar = () => [...PERSONAS.values()].filter(p => p.ciudades.size);
+
+function articulosDe(c){
+  const y = anioActual(), out = [];
+  const gente = c ? c.impresores : conLugar();
+  for (const p of gente){
+    if (!activo(p, y, c?.id)) continue;
+    const { lista, respaldo } = periodos(p, c?.id);
+    if (!lista.length) continue;
+    const img = miniatura(archivoPrincipal(p), 120);
+    if (c){
+      lista.forEach((x, k) => out.push(articulo(`${p.id}~${k}`, p.nombre,
+        rango(x.desde, x.hasta) + (respaldo ? ` (${x.fuente})` : ''), x, img, p)));
+    } else {
+      const desde = Math.min(...lista.map(x => x.desde ?? x.hasta));
+      const hasta = Math.max(...lista.map(x => x.hasta ?? x.desde));
+      const lugares = [...p.ciudades.keys()].map(k => CIUDADES.find(z => z.id === k)?.nombre).filter(Boolean);
+      out.push(articulo(`${p.id}~0`, p.nombre,
+        `${lugares.slice(0, 3).join(', ')}${lugares.length > 3 ? '…' : ''} · ${rango(desde, hasta)}${respaldo ? ` (${lista[0].fuente})` : ''}`,
+        { desde, hasta }, img, p));
+    }
+  }
+  return out;
+}
+const ESTILO_TARJETA = {
+  compania: { backgroundColor: '#fbf1dc', header: { text: { color: '#8a5a00' } } },
+  mujer: { backgroundColor: '#e3f3f1', header: { text: { color: '#0e7c7b' } } },
+  otro:  { backgroundColor: '#efe9fa', header: { text: { color: '#7a4fc9' } } }
+};
+function articulo(id, title, subtitle, x, imageUrl, p){
+  let desde = x.desde ?? x.hasta, hasta = x.hasta;
+  if (Number.isFinite(hasta) && hasta < desde) [desde, hasta] = [hasta, desde];
+  const a = { id, title, subtitle, from: { year: desde } };
+  if (Number.isFinite(hasta) && hasta !== desde) a.to = { year: hasta };
+  if (imageUrl) a.imageUrl = imageUrl;
+  const estilo = p && ESTILO_TARJETA[generoDe(p).clase];
+  if (estilo) a.style = estilo;
+  return a;
+}
+
+let lineaCiudad = null;
+function pintarLinea(c){
+  lineaCiudad = c || null;
+  const sel = document.getElementById('filtro-lugar');
+  if (sel) sel.value = c ? c.id : '';
+  document.getElementById('linea-titulo').textContent = c ? `Línea de tiempo · ${c.nombre}` : 'Línea de tiempo · todos los impresores';
+  document.getElementById('ver-todos').hidden = !c;
+  articulosActuales = articulosDe(c);
+  crearLinea();
+}
+
+function crearLinea(){
+  const H = window.Histropedia, aviso = document.getElementById('linea-aviso');
+  const cont = document.getElementById('linea');
+  cont.querySelectorAll('canvas, .histropedia-container').forEach(n => n.remove());
+  if (!H?.Timeline){ aviso.hidden = false; aviso.textContent = 'No se pudo cargar HistropediaJS (revisá la consola con F12).'; return; }
+  if (!articulosActuales.length){ aviso.hidden = false; aviso.textContent = filtrosActivos() ? 'Ningún impresor con fechas coincide con los filtros elegidos.' : 'No hay impresores con fechas para mostrar.'; return; }
+  aviso.hidden = true;
+
+  const lienzo = document.createElement('div');
+  lienzo.className = 'histropedia-container';
+  lienzo.style.cssText = 'position:absolute;inset:0';
+  cont.appendChild(lienzo);
+
+  const alto = cont.clientHeight;
+  if (alto < 40 || cont.clientWidth < 40){ lienzo.remove(); linea = null; return; }
+  const opciones = {
+    width: cont.clientWidth, height: alto,
+    initialDate: { year: 1540, month: 1, day: 1 },
+    zoom: { initial: 30 },
+    on: { 'article-select': alSeleccionarEtiqueta, 'article-click': alSeleccionarEtiqueta,
+          'article-pointerenter': alEntrarTarjeta, 'article-pointerleave': alSalirTarjeta },
+    article: {
+      density: H.DENSITY_ALL ?? 'all',
+
+      cardLayoutBreakpoints: [{ maxHeight: 520, layout: 'landscape' }],
+
+      distanceToBaseline: { value: Math.max(40, Math.round(alto * 0.4)) },
+
+      autoStacking: { active: true, rowSpacing: 34, range: 'all', fitToHeight: true, topGap: 4 },
+      defaultStyle: {
+        width: 190, backgroundColor: '#ffffff',
+        header:    { height: 28, text: { font: "600 13px Inter, sans-serif", color: '#0b3b60' } },
+        subheader: { height: 20, text: { font: "normal 11px Inter, sans-serif", color: '#5b6776' } },
+        image: { maxHeight: 80 }
+      },
+      defaultHoverStyle:  { backgroundColor: '#eef4f9' },
+      defaultActiveStyle: { backgroundColor: '#fff4d6', header: { text: { color: '#0b3b60' } } }
+    }
+  };
+
+  linea = new H.Timeline(lienzo, opciones);
+  linea.load(articulosActuales);
+}
+
+let espera;
+function redimensionarLinea(){
+  clearTimeout(espera);
+  espera = setTimeout(() => {
+    mapa.invalidateSize();
+    const cont = document.getElementById('linea');
+    if (cont.clientHeight < 40) return;
+    try {
+      if (linea && typeof linea.setSize === 'function'){ linea.setSize(cont.clientWidth, cont.clientHeight); return; }
+    } catch (e) {   }
+    crearLinea();
+  }, 120);
+}
+
+let ultimaSeleccion = { id: null, t: 0 };
+function alSeleccionarEtiqueta(article){
+  const a = article || linea?.getActiveArticle?.() || {};
+  const id = a.id ?? a.data?.id ?? a.article?.id ?? a.article?.data?.id;
+  if (!id) return;
+  const idP = String(id).split('~')[0];
+  const ahora = Date.now();
+  if (ultimaSeleccion.id === idP && ahora - ultimaSeleccion.t < 400) return;
+  ultimaSeleccion = { id: idP, t: ahora };
+
+  const p = PERSONAS.get(idP);
+  if (!p) return;
+  if (ciudadActual && p.ciudades.has(ciudadActual.id)){ abrirFicha(idP); return; }
+
+  const c = CIUDADES.find(z => p.ciudades.has(z.id));
+  if (c){
+    if (vistaActual === 'fichas') mapa.flyTo(c.coord, Math.max(mapa.getZoom(), 6));
+    else mapa.setView(c.coord, Math.max(mapa.getZoom(), 6), { animate: false });
+    abrirCiudad(c, idP, { mantenerLinea: true });
+  }
+}
+
+const pie = document.getElementById('pie'), tirador = document.getElementById('tirador');
+const MIN_ALTO = 140, maxAlto = () => Math.round(window.innerHeight * .8);
+function fijarAlto(px){
+  const h = Math.max(MIN_ALTO, Math.min(maxAlto(), Math.round(px)));
+  document.documentElement.style.setProperty('--linea-alto', h + 'px');
+  try { localStorage.setItem('linea-alto', h); } catch (e) {}
+  redimensionarLinea();
+}
+const altoActual = () => pie.getBoundingClientRect().height;
+
+const botonPlegar = document.getElementById('linea-plegar');
+function plegarLinea(plegar){
+  document.body.classList.toggle('linea-plegada', plegar);
+  botonPlegar.setAttribute('aria-expanded', String(!plegar));
+  botonPlegar.querySelector('.texto').textContent = plegar ? 'Mostrar línea de tiempo' : 'Ocultar';
+  botonPlegar.title = plegar ? 'Desplegar la línea de tiempo' : 'Plegar la línea de tiempo';
+  try { localStorage.setItem('linea-plegada', plegar ? '1' : '0'); } catch (e) {}
+  redimensionarLinea();
+}
+botonPlegar.onclick = () => plegarLinea(!document.body.classList.contains('linea-plegada'));
+
+tirador.addEventListener('pointerdown', e => {
+  tirador.setPointerCapture(e.pointerId);
+  let ultimoY = e.clientY;
+  const mover = ev => { ultimoY = ev.clientY; document.documentElement.style.setProperty('--linea-alto',
+    Math.max(MIN_ALTO, Math.min(maxAlto(), window.innerHeight - ev.clientY)) + 'px'); };
+  const soltar = () => {
+    tirador.removeEventListener('pointermove', mover); tirador.removeEventListener('pointerup', soltar);
+
+    if (window.innerHeight - ultimoY < MIN_ALTO - 60){ fijarAlto(MIN_ALTO); plegarLinea(true); }
+    else fijarAlto(altoActual());
+  };
+  tirador.addEventListener('pointermove', mover);
+  tirador.addEventListener('pointerup', soltar);
+});
+tirador.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp'){ e.preventDefault(); fijarAlto(altoActual() + 40); }
+  if (e.key === 'ArrowDown'){ e.preventDefault();
+    if (altoActual() - 40 < MIN_ALTO) plegarLinea(true); else fijarAlto(altoActual() - 40); }
+});
+const PASO_ZOOM = 2;
+const zoomActual = () => linea?.timescaleManager?.zoom ?? linea?.options?.zoom?.initial ?? 30;
+function cambiarZoom(delta){
+  if (!linea || typeof linea.setZoom !== 'function') return;
+  linea.setZoom(zoomActual() + delta);
+}
+function verTodoElPeriodo(animar = true){
+  if (!linea) return;
+  const opciones = { padding: { left: 60, right: 60 }, animation: { active: animar, duration: 350 } };
+  try {
+    if (typeof linea.fitArticles === 'function') return linea.fitArticles(opciones);
+    if (typeof linea.fitDateRange === 'function') return linea.fitDateRange({ year: VISTA_DESDE }, { year: VISTA_HASTA }, opciones);
+  } catch (e) { console.warn('No se pudo ajustar la línea de tiempo', e); }
+}
+document.getElementById('zoom-menos').onclick = () => cambiarZoom(PASO_ZOOM);
+document.getElementById('zoom-mas').onclick   = () => cambiarZoom(-PASO_ZOOM);
+document.getElementById('ver-periodo').onclick = () => verTodoElPeriodo();
+function resumenPanel(){
+  const visibles = [...PERSONAS.values()].filter(p => pasaFiltros(p));
+  const conCiudad = visibles.filter(p => p.ciudades.size);
+  const ciudades = CIUDADES.filter(c => c.impresores.some(p => pasaFiltros(p, c.id))).length;
+  const sinLugar = visibles.length - conCiudad.length;
+  const fuera = PERSONAS.size - totalVista();
+  return `<p class="vacio">${conCiudad.length} impresores activos entre ${VISTA_DESDE} y ${VISTA_HASTA} en ${ciudades} ciudades. Hacé clic en una ciudad del mapa o en una etiqueta de la línea de tiempo.</p>` +
+    (sinLugar ? `<p class="nota">${sinLugar === 1 ? 'Otro impresor no tiene' : `Otros ${sinLugar} impresores no tienen`} lugar de trabajo en Wikidata: ${sinLugar === 1 ? 'figura' : 'figuran'} en la Lista de impresores.</p>` : '') +
+    (fuera ? `<p class="nota">${fuera === 1 ? 'Un elemento del WikiProyecto queda' : `${fuera} elementos del WikiProyecto quedan`} fuera del período o sin fechas: <a href="#" class="ver-fuera">ver cuáles</a>.</p>` : '');
+}
+function deseleccionarCiudad(){
+  if (!datosListos) return;
+  ciudadActual = null; pintarMarcadores(anioActual()); pintarLinea(null);
+  document.getElementById('panel').innerHTML = vistaActual === 'linea'
+    ? '<p class="vacio">Hacé clic en una tarjeta de la línea de tiempo para ver la ficha.</p>'
+    : resumenPanel();
+}
+mapa.on('click', () => { if (ciudadActual) deseleccionarCiudad(); });
+document.getElementById('panel').addEventListener('click', e => {
+  if (e.target.closest('.cerrar-ciudad')) deseleccionarCiudad();
+  else if (e.target.closest('.ver-fuera')){
+    e.preventDefault();
+    const d = document.getElementById('acerca-fuera'); d.open = true;
+    document.getElementById('abrir-acerca').click();
+    setTimeout(() => d.scrollIntoView({ block: 'start' }), 50);
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && ciudadActual && vistaActual !== 'tabla' && !document.querySelector('dialog[open]')
+      && document.activeElement?.id !== 'buscar-mapa') deseleccionarCiudad();
+});
+function llenarFuera(){
+  const d = document.getElementById('acerca-fuera');
+  const fuera = [...PERSONAS.values()].filter(p => !enVista(p))
+    .map(p => { const l = periodos(p).lista;
+      const motivo = !l.length ? 'sin fechas en Wikidata'
+        : `activo ${rango(Math.min(...l.map(x => x.desde ?? x.hasta)), Math.max(...l.map(x => x.hasta ?? x.desde)))}`;
+      return { p, motivo }; })
+    .sort((a, b) => a.p.nombre.localeCompare(b.p.nombre, 'es'));
+  const ciudadesFuera = CIUDADES.filter(c => !c.impresores.some(p => enVista(p, c.id)));
+  const items = [
+    ...fuera.map(({ p, motivo }) => `<li><a href="${p.url}" target="_blank" rel="noopener">${esc(p.nombre)}</a> · ${esc(motivo)}</li>`),
+    ...ciudadesFuera.map(c => `<li>Ciudad sin actividad en el período: <a href="https://www.wikidata.org/wiki/${c.id}" target="_blank" rel="noopener">${esc(c.nombre)}</a></li>`),
+    ...[...COORD_INVALIDAS].map(([id, n]) => `<li>Ciudad con coordenadas no válidas: <a href="https://www.wikidata.org/wiki/${id}#P625" target="_blank" rel="noopener">${esc(n)}</a></li>`)
+  ];
+  d.hidden = !items.length;
+  d.querySelector('summary').textContent = `Qué queda fuera de lo que se muestra (${fuera.length} elementos, ${ciudadesFuera.length + COORD_INVALIDAS.size} ciudades)`;
+  d.querySelector('ul').innerHTML = items.join('');
+}
+document.getElementById('ver-todos').onclick = () => {
+  deseleccionarCiudad();
+};
+window.addEventListener('resize', redimensionarLinea);
+try {
+  const g = localStorage.getItem('linea-alto'); if (g) document.documentElement.style.setProperty('--linea-alto', g + 'px');
+} catch (e) {}
+plegarLinea(true);
+
+const campoDesde = document.getElementById('f-desde'), campoHasta = document.getElementById('f-hasta');
+const campoCiudad = document.getElementById('f-ciudad'), campoGenero = document.getElementById('f-genero');
+const campoOcupacion = document.getElementById('f-ocupacion');
+[campoDesde, campoHasta].forEach(c => { c.min = VISTA_DESDE; c.max = VISTA_HASTA; });
+campoDesde.value = VISTA_DESDE; campoHasta.value = VISTA_HASTA;
+
+function llenarFiltros(){
+  campoCiudad.innerHTML = '<option value="">Todas</option>' + [...CIUDADES]
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map(c => `<option value="${c.id}">${esc(c.nombre)} (${c.impresores.length})</option>`).join('');
+  const cuenta = new Map();
+  for (const p of PERSONAS.values()) for (const id of p.ocIds || []) cuenta.set(id, (cuenta.get(id) || 0) + 1);
+  campoOcupacion.innerHTML = '<option value="">Todas</option>' + [...cuenta.entries()]
+    .map(([id, n]) => [id, NOMBRES_OCUPACION.get(id) || id, n])
+    .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+    .map(([id, nombre, n]) => `<option value="${id}">${esc(nombre)} (${n})</option>`).join('');
+  actualizarContador();
+}
+
+function actualizarContador(){
+  const pasan = [...PERSONAS.values()].filter(p => pasaFiltros(p)).length;
+  const total = totalVista();
+  document.getElementById('f-contador').textContent = filtrosActivos() ? `${pasan} de ${total}` : `${total} en total`;
+  document.getElementById('f-quitar').hidden = !filtrosActivos();
+  campoDesde.classList.toggle('activo', FILTROS.desde > VISTA_DESDE);
+  campoHasta.classList.toggle('activo', FILTROS.hasta < VISTA_HASTA);
+  campoCiudad.classList.toggle('activo', !!FILTROS.ciudad);
+  campoGenero.classList.toggle('activo', !!FILTROS.genero);
+  campoOcupacion.classList.toggle('activo', !!FILTROS.ocupacion);
+}
+
+function aplicarFiltros(){
+  let d = parseInt(campoDesde.value, 10), h = parseInt(campoHasta.value, 10);
+  if (isNaN(d)) d = VISTA_DESDE;
+  if (isNaN(h)) h = VISTA_HASTA;
+  d = Math.min(Math.max(d, VISTA_DESDE), VISTA_HASTA); h = Math.min(Math.max(h, VISTA_DESDE), VISTA_HASTA);
+  if (d > h) [d, h] = [h, d];
+  Object.assign(FILTROS, { desde: d, hasta: h, ciudad: campoCiudad.value, genero: campoGenero.value, ocupacion: campoOcupacion.value });
+  campoDesde.value = d; campoHasta.value = h;
+  if (!datosListos) return;
+  pintarMarcadores(0);
+  if (ciudadActual) abrirCiudad(ciudadActual, null, { mantenerLinea: true });
+  else if (vistaActual !== 'linea') document.getElementById('panel').innerHTML = resumenPanel();
+  pintarLinea(lineaCiudad);
+  if (vistaActual === 'tabla') pintarTabla();
+  if (vistaActual === 'galeria' && MARCAS) pintarGaleria();
+  actualizarContador();
+}
+[campoCiudad, campoGenero, campoOcupacion].forEach(c => c.addEventListener('change', aplicarFiltros));
+[campoDesde, campoHasta].forEach(c => {
+  c.addEventListener('change', aplicarFiltros);
+  c.addEventListener('keydown', e => { if (e.key === 'Enter') aplicarFiltros(); });
+});
+document.getElementById('f-quitar').onclick = () => {
+  campoDesde.value = VISTA_DESDE; campoHasta.value = VISTA_HASTA;
+  campoCiudad.value = campoGenero.value = campoOcupacion.value = '';
+  aplicarFiltros();
+};
+
+const SPARQL_TRANSPARENTE = `PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?item ?nombre (GROUP_CONCAT(DISTINCT ?motivo; separator=", ") AS ?motivos)
+       (MIN(YEAR(?fecha)) AS ?primerAnio) (MAX(YEAR(?fecha)) AS ?ultimoAnio) WHERE {
+
+  { ?item wdt:P6104 wd:Q114008937 } UNION { ?item wdt:P5008 wd:Q114008937 }
+
+  {
+    ?item wdt:P106 ?ocupacion .
+    VALUES ?ocupacion { ${OCUPACIONES_LISTA} }
+    BIND("ocupación" AS ?motivo)
+  }
+  UNION
+  {
+    ?item wdt:P31/wdt:P279* wd:Q783794 .
+    BIND("compañía" AS ?motivo)
+  }
+
+  {
+    ?item wdt:P569|wdt:P570|wdt:P571|wdt:P576|wdt:P2031|wdt:P2032|wdt:P1317 ?fecha
+  } UNION {
+    ?item p:P937 ?declaracion . ?declaracion pq:P580|pq:P582|pq:P585 ?fecha
+  }
+  FILTER(isLiteral(?fecha) && YEAR(?fecha) >= ${ANIO_DESDE} && YEAR(?fecha) <= ${ANIO_HASTA})
+
+  OPTIONAL { ?item rdfs:label ?nombreEs FILTER(LANG(?nombreEs) = "es") }
+  OPTIONAL { ?item rdfs:label ?nombreEn FILTER(LANG(?nombreEn) = "en") }
+  BIND(COALESCE(?nombreEs, ?nombreEn) AS ?nombre)
+}
+GROUP BY ?item ?nombre
+ORDER BY ?nombre`;
+document.getElementById('consulta-qlever').href = SERVICIOS.qlever.ver(SPARQL_TRANSPARENTE);
+document.getElementById('consulta-wdqs').href   = SERVICIOS.wdqs.ver(SPARQL_TRANSPARENTE);
+const vistaTabla = document.getElementById('tabla');
+const vistaGaleria = document.getElementById('galeria');
+
+let vistaActual = 'fichas';
+function mostrarVista(nombre){
+  vistaActual = nombre;
+  const esTabla = nombre === 'tabla', esLinea = nombre === 'linea', esGaleria = nombre === 'galeria';
+  document.querySelectorAll('.vistas button').forEach(x => x.setAttribute('aria-pressed', x.dataset.vista === nombre));
+  document.body.classList.toggle('modo-tabla', esTabla);
+  document.body.classList.toggle('modo-linea', esLinea);
+  document.body.classList.toggle('modo-galeria', esGaleria);
+  vistaTabla.hidden = !esTabla;
+  if (!esTabla){ fichaLista.hidden = true; document.body.classList.remove('ficha-abierta'); }
+  else if (seleccionLista){ fichaLista.hidden = false; document.body.classList.add('ficha-abierta'); }
+  vistaGaleria.hidden = !esGaleria;
+
+  document.getElementById('mapa').hidden  = esTabla || esLinea || esGaleria;
+  document.getElementById('lateral').hidden = esTabla || esGaleria;
+  document.getElementById('pie').hidden   = esTabla || esGaleria;
+  if (esTabla){ pintarTabla(); vistaTabla.scrollTop = 0; return; }
+  if (esGaleria){ abrirGaleria(); return; }
+  if (esLinea && !ciudadActual)
+    document.getElementById('panel').innerHTML = '<p class="vacio">Hacé clic en una tarjeta de la línea de tiempo para ver la ficha.</p>';
+  if (!esLinea) mapa.invalidateSize();
+  redimensionarLinea();
+}
+document.querySelectorAll('.vistas button').forEach(b => b.addEventListener('click', () => mostrarVista(b.dataset.vista)));
+
+const COLUMNAS = [
+  { id: 'nombre',     titulo: 'Nombre' },
+  { id: 'genero',     titulo: 'Género o tipo' },
+  { id: 'ocupacion',  titulo: 'Ocupación' },
+  { id: 'nacimiento', titulo: 'Lugar de nacimiento' },
+  { id: 'ciudades',   titulo: 'Ciudades donde trabajó' },
+  { id: 'fechas',     titulo: 'Fechas' },
+  { id: 'enlaces',    titulo: 'Enlaces', sinOrden: true }
+];
+let orden = { col: 'nombre', dir: 1 }, busqueda = '', datosListos = false;
+const normalizar = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+function filasTabla(){
+  return [...PERSONAS.values()].map(p => {
+    const { lista, respaldo } = periodos(p);
+    const desde = lista.length ? Math.min(...lista.map(x => x.desde ?? x.hasta)) : null;
+    const hasta = lista.length ? Math.max(...lista.map(x => x.hasta ?? x.desde)) : null;
+    const ciudades = [...p.ciudades.keys()].map(k => CIUDADES.find(z => z.id === k)).filter(Boolean)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+    return { p, ciudades, desde, hasta, respaldo: respaldo && lista.length ? lista[0].fuente : null };
+  });
+}
+
+const faltante = (p, propiedad, dato) =>
+  `<a class="faltante" href="https://www.wikidata.org/wiki/${p.id}#${propiedad}" target="_blank" rel="noopener"
+      title="Sin datos de ${dato}: completalo en Wikidata">—</a>`;
+
+function faltantesDe(p){
+  const f = [];
+  if (!periodos(p).lista.length) f.push({ dato: 'fechas', prop: p.compania ? 'P571' : 'P569' });
+  if (!p.ciudades.size) f.push({ dato: 'lugar de trabajo', prop: 'P937' });
+  if (!archivosDe(p).length) f.push({ dato: p.compania ? 'marca o logotipo' : 'imagen', prop: p.compania ? 'P154' : 'P18' });
+  if (!p.compania && !p.genero) f.push({ dato: 'género', prop: 'P21' });
+  return f;
+}
+const avisoFaltantes = p => {
+  const f = faltantesDe(p);
+  return f.length ? `<p class="aviso-faltan">Faltan datos: ${f.map(x =>
+    `<a href="https://www.wikidata.org/wiki/${p.id}#${x.prop}" target="_blank" rel="noopener" title="Completar en Wikidata">${x.dato}</a>`).join(', ')}</p>` : '';
+};
+const enlaceWikidata = p =>
+  `<a href="${p.url}" target="_blank" rel="noopener" title="Ver el elemento y completar o corregir sus datos">Ver y mejorar en Wikidata (${p.id}) ↗</a>`;
+let soloFaltantes = false, ultimasFilas = [];
+
+function descargarCSV(){
+  const celda = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const encabezado = ['Nombre', 'Wikidata', 'Género o tipo', 'Ocupaciones', 'Lugar de nacimiento o fundación',
+                      'Ciudades de trabajo', 'Desde', 'Hasta', 'Origen de las fechas', 'Wikipedia', 'Enlace a Wikidata', 'Datos faltantes'];
+  const filas = ultimasFilas.map(f => {
+    const g = generoDe(f.p);
+    return [f.p.nombre, f.p.id, g.clase === 'sd' ? '' : (TEXTOS_TABLA[g.clase] ?? g.texto), f.p.ocupaciones || '',
+            f.p.nacimiento?.nombre || '', f.ciudades.map(c => c.nombre).join('; '), f.desde ?? '', f.hasta ?? '',
+            f.respaldo || (f.desde || f.hasta ? 'lugar de trabajo' : ''), f.p.wikipedia || '',
+            `https://www.wikidata.org/wiki/${f.p.id}`, faltantesDe(f.p).map(x => x.dato).join('; ')];
+  });
+  const csv = '\uFEFF' + [encabezado, ...filas].map(fila => fila.map(celda).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'impresores-biblioteca-publica-unlp.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function pintarTabla(){
+  if (!datosListos) return;
+  const clave = {
+    nombre:     f => normalizar(f.p.nombre),
+    genero:     f => ({ mujer: 0, otro: 1, compania: 2, varon: 3, sd: 4 })[generoDe(f.p).clase],
+    ocupacion:  f => f.p.ocupaciones ? normalizar(f.p.ocupaciones) : '\uffff',
+    nacimiento: f => f.p.nacimiento ? normalizar(f.p.nacimiento.nombre) : '\uffff',
+    ciudades:   f => normalizar(f.ciudades[0]?.nombre ?? '\uffff'),
+    fechas:     f => f.desde ?? 99999
+  }[orden.col];
+  const q = normalizar(busqueda);
+  const filas = filasTabla()
+    .filter(f => !q || normalizar([f.p.nombre, f.p.ocupaciones, f.p.nacimiento?.nombre, ...f.ciudades.map(c => c.nombre)].join(' ')).includes(q))
+    .filter(f => !soloFaltantes || faltantesDe(f.p).length)
+    .filter(f => pasaFiltros(f.p))
+    .sort((a, b) => { const x = clave(a), y = clave(b); return (x < y ? -1 : x > y ? 1 : 0) * orden.dir; });
+
+  ultimasFilas = filas;
+  const enfocado = document.activeElement?.id;
+  vistaTabla.innerHTML = `
+    <div class="tabla-cab">
+      <h2>Impresores</h2>
+      <span class="cuenta">${filas.length} de ${totalVista()}</span>
+      ${leyendaGenero('style="margin:0"', TEXTOS_TABLA)}
+      <button type="button" class="descargar" id="descargar-csv" title="Descargar lo que se ve en la lista">Descargar CSV</button>
+      <label class="solo-faltantes"><input type="checkbox" id="solo-faltantes" ${soloFaltantes ? 'checked' : ''}>
+        Solo con datos faltantes</label>
+      <input id="buscar" type="search" placeholder="Buscar por nombre, ocupación, ciudad o lugar de nacimiento"
+             aria-label="Buscar impresores" value="${esc(busqueda)}">
+    </div>
+    <table class="impresores">
+      <thead><tr>${COLUMNAS.map(c => c.sinOrden ? `<th scope="col"><span style="display:block;padding:.6rem .75rem">${c.titulo}</span></th>` :
+        `<th scope="col" aria-sort="${orden.col === c.id ? (orden.dir > 0 ? 'ascending' : 'descending') : 'none'}">
+           <button type="button" data-col="${c.id}">${c.titulo}</button></th>`).join('')}</tr></thead>
+      <tbody>${filas.map(f => `
+        <tr data-genero="${generoDe(f.p).clase}" data-persona="${f.p.id}" tabindex="0"
+            class="${f.p.id === seleccionLista ? 'seleccionada' : ''}" title="Ver la ficha">
+          <td><div class="celda-nombre">
+            ${archivoPrincipal(f.p) ? `<img loading="lazy" src="${miniatura(archivoPrincipal(f.p), 80)}" alt=""
+                 class="${esDeBiblio(archivoPrincipal(f.p)) ? 'de-biblio' : ''}" title="${esDeBiblio(archivoPrincipal(f.p)) ? 'Imagen de la Biblioteca Pública UNLP' : ''}">` : '<span class="sin-img"></span>'}
+            <span>${esc(f.p.nombre)}</span></div></td>
+          <td>${f.p.compania || f.p.genero ? chipGenero(f.p, TEXTOS_TABLA) : faltante(f.p, 'P21', 'género')}</td>
+          <td class="celda-ocupacion">${f.p.ocupaciones ? esc(f.p.ocupaciones) : faltante(f.p, f.p.compania ? 'P452' : 'P106', f.p.compania ? 'sector' : 'ocupación')}</td>
+          <td>${f.p.nacimiento ? esc(f.p.nacimiento.nombre) : faltante(f.p, f.p.compania ? 'P740' : 'P19', f.p.compania ? 'lugar de fundación' : 'lugar de nacimiento')}</td>
+          <td>${f.ciudades.length ? f.ciudades.map(c => `<button type="button" class="chip" data-ciudad="${c.id}" data-persona="${f.p.id}"
+                 title="Ver en el mapa">${esc(c.nombre)}</button>`).join('') : faltante(f.p, 'P937', 'lugar de trabajo')}</td>
+          <td>${f.desde || f.hasta ? rango(f.desde, f.hasta) + (f.respaldo ? ` <span class="sd">(${f.respaldo})</span>` : '') : faltante(f.p, f.p.compania ? 'P571' : 'P569', 'fechas')}</td>
+          <td><div class="enlaces">
+            ${f.p.wikipedia ? `<a href="${esc(f.p.wikipedia)}" target="_blank" rel="noopener">Wikipedia ↗</a>` : ''}
+            <a href="${f.p.url}" target="_blank" rel="noopener">Wikidata ↗</a></div></td>
+        </tr>`).join('') || `<tr><td colspan="7" class="sd">No hay resultados para “${esc(busqueda)}”.</td></tr>`}
+      </tbody>
+    </table>`;
+
+  document.getElementById('descargar-csv').onclick = descargarCSV;
+  document.getElementById('solo-faltantes').onchange = e => { soloFaltantes = e.target.checked; pintarTabla(); };
+  const buscar = document.getElementById('buscar');
+  buscar.addEventListener('input', e => { busqueda = e.target.value; pintarTabla(); });
+  if (enfocado === 'buscar'){ buscar.focus(); buscar.setSelectionRange(busqueda.length, busqueda.length); }
+}
+
+let seleccionLista = null;
+const fichaLista = document.getElementById('ficha-lista');
+
+function fichaPersona(p){
+  const g = generoDe(p);
+  const lugares = [...p.ciudades.entries()].map(([idC, pers]) => {
+    const c = CIUDADES.find(z => z.id === idC);
+    const fechas = pers.length ? pers.map(x => rango(x.desde, x.hasta)).join('; ') : '';
+    return c ? `<li><button type="button" class="chip" data-ciudad="${c.id}" data-persona="${p.id}" title="Ver en el mapa">${esc(c.nombre)}</button>
+      ${fechas ? `<span class="nota">${fechas}</span>` : ''}</li>` : '';
+  }).join('');
+  const { lista, respaldo } = periodos(p);
+  const desde = lista.length ? Math.min(...lista.map(x => x.desde ?? x.hasta)) : null;
+  const hasta = lista.length ? Math.max(...lista.map(x => x.hasta ?? x.desde)) : null;
+  return `
+    <div class="cabecera-ficha">
+      <h2>${esc(p.nombre)}</h2>
+      <button type="button" class="cerrar" id="cerrar-ficha-lista" aria-label="Cerrar la ficha" title="Cerrar (Esc)">×</button>
+    </div>
+    <p style="margin:0 0 .8rem">${p.compania || p.genero ? chipGenero(p, TEXTOS_TABLA) : `<span class="nota">Género: ${faltante(p, 'P21', 'género')}</span>`}</p>
+    <div class="ficha">
+      <div class="imgs">
+        ${archivosDe(p).map(x => `<figure class="${x.biblio ? 'de-biblio' : ''}">
+            <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(nombreArchivo(x.url).replace(/ /g, '_'))}" target="_blank" rel="noopener">
+            <img loading="lazy" src="${miniatura(x.url)}" alt="${ETIQUETA_TIPO[x.tipo]} de ${esc(p.nombre)}"></a>
+            <figcaption>${ETIQUETA_TIPO[x.tipo]}${x.biblio ? '<span class="sello-biblio">Biblioteca Pública UNLP</span>' : ''}</figcaption></figure>`).join('')
+          || '<p class="vacio">Sin imagen, marca ni firma en Wikidata.</p>'}
+      </div>
+      ${avisoFaltantes(p)}
+      <dl class="datos">
+        <dt>${p.compania ? 'Sector' : 'Ocupación'}</dt>
+        <dd>${p.ocupaciones ? esc(p.ocupaciones) : faltante(p, p.compania ? 'P452' : 'P106', p.compania ? 'sector' : 'ocupación')}</dd>
+        <dt>${p.compania ? 'Lugar de fundación' : 'Lugar de nacimiento'}</dt>
+        <dd>${p.nacimiento ? `<a href="https://www.wikidata.org/wiki/${p.nacimiento.id}" target="_blank" rel="noopener">${esc(p.nacimiento.nombre)}</a>`
+              : faltante(p, p.compania ? 'P740' : 'P19', p.compania ? 'lugar de fundación' : 'lugar de nacimiento')}</dd>
+        <dt>Fechas</dt>
+        <dd>${desde || hasta ? rango(desde, hasta) + (respaldo ? ` <span class="sd">(${lista[0].fuente})</span>` : '')
+              : faltante(p, p.compania ? 'P571' : 'P569', 'fechas')}</dd>
+        <dt>Trabajó en</dt>
+        <dd>${lugares ? `<ul class="lugares">${lugares}</ul>` : faltante(p, 'P937', 'lugar de trabajo')}</dd>
+      </dl>
+      <div class="enlaces">
+        ${p.wikipedia ? `<a href="${esc(p.wikipedia)}" target="_blank" rel="noopener">Wikipedia en español ↗</a>` : ''}
+        ${enlaceWikidata(p)}
+      </div>
+    </div>`;
+}
+
+function abrirFichaLista(id){
+  const p = PERSONAS.get(id);
+  if (!p) return;
+  seleccionLista = id;
+  fichaLista.innerHTML = fichaPersona(p);
+  fichaLista.hidden = false;
+  fichaLista.scrollTop = 0;
+  document.body.classList.add('ficha-abierta');
+  vistaTabla.querySelectorAll('tbody tr').forEach(tr => tr.classList.toggle('seleccionada', tr.dataset.persona === id));
+}
+function cerrarFichaLista(){
+  seleccionLista = null;
+  fichaLista.hidden = true;
+  document.body.classList.remove('ficha-abierta');
+  vistaTabla.querySelectorAll('tbody tr.seleccionada').forEach(tr => tr.classList.remove('seleccionada'));
+}
+function irAlMapaDesdeChip(chip){
+  const c = CIUDADES.find(z => z.id === chip.dataset.ciudad);
+  if (!c) return;
+  cerrarFichaLista();
+  mostrarVista('fichas');
+  mapa.flyTo(c.coord, Math.max(mapa.getZoom(), 6));
+  abrirCiudad(c, chip.dataset.persona);
+}
+fichaLista.addEventListener('click', e => {
+  if (e.target.closest('#cerrar-ficha-lista')){ cerrarFichaLista(); return; }
+  const chip = e.target.closest('.chip');
+  if (chip) irAlMapaDesdeChip(chip);
+});
+vistaTabla.addEventListener('keydown', e => {
+  const tr = e.target.closest('tbody tr[data-persona]');
+  if (tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); abrirFichaLista(tr.dataset.persona); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && vistaActual === 'tabla' && seleccionLista && !document.querySelector('dialog[open]')) cerrarFichaLista();
+});
+
+vistaTabla.addEventListener('click', e => {
+  const th = e.target.closest('button[data-col]');
+  if (th){
+    const col = th.dataset.col;
+    orden = { col, dir: orden.col === col ? -orden.dir : 1 };
+    pintarTabla();
+    document.querySelector(`button[data-col="${col}"]`)?.focus();
+    return;
+  }
+  const chip = e.target.closest('.chip');
+  if (chip){ irAlMapaDesdeChip(chip); return; }
+  if (e.target.closest('a, button, input')) return;
+  const tr = e.target.closest('tbody tr[data-persona]');
+  if (tr) abrirFichaLista(tr.dataset.persona);
+});
+
+const entradaBusqueda = document.getElementById('buscar-mapa');
+const listaSugerencias = document.getElementById('sugerencias');
+let sugerencias = [], sugerenciaActiva = -1;
+
+function buscarSugerencias(texto){
+  const q = normalizar(texto.trim());
+  if (q.length < 2) return [];
+  const ciudades = CIUDADES.filter(c => normalizar(c.nombre).includes(q))
+    .map(c => ({ tipo: 'ciudad', id: c.id, nombre: c.nombre, detalle: `ciudad · ${c.impresores.length}` }));
+  const personas = conLugar().filter(p => normalizar(p.nombre).includes(q) || normalizar(p.ocupaciones).includes(q))
+    .map(p => ({ tipo: 'persona', id: p.id, nombre: p.nombre, detalle: p.compania ? 'compañía' : (p.ocupaciones || '').split(',')[0] }));
+  const empiezaCon = x => normalizar(x.nombre).startsWith(q) ? 0 : 1;
+  return [...personas, ...ciudades].sort((a, b) => empiezaCon(a) - empiezaCon(b) || a.nombre.localeCompare(b.nombre, 'es')).slice(0, 12);
+}
+
+function mostrarSugerencias(){
+  sugerencias = buscarSugerencias(entradaBusqueda.value);
+  sugerenciaActiva = -1;
+  const hayTexto = entradaBusqueda.value.trim().length >= 2;
+  listaSugerencias.innerHTML = sugerencias.map((x, i) =>
+    `<li role="option" id="sug-${i}" data-i="${i}" aria-selected="false"><span>${esc(x.nombre)}</span><span class="tipo">${esc(x.detalle || '')}</span></li>`).join('')
+    || (hayTexto ? '<li class="vacio" aria-disabled="true">Sin resultados</li>' : '');
+  const abierto = hayTexto;
+  listaSugerencias.hidden = !abierto;
+  entradaBusqueda.setAttribute('aria-expanded', String(abierto));
+}
+
+function elegirSugerencia(x){
+  if (!x) return;
+  listaSugerencias.hidden = true;
+  entradaBusqueda.setAttribute('aria-expanded', 'false');
+  entradaBusqueda.value = x.nombre;
+  if (x.tipo === 'ciudad'){
+    const c = CIUDADES.find(z => z.id === x.id);
+    mapa.flyTo(c.coord, Math.max(mapa.getZoom(), 6));
+    abrirCiudad(c);
+  } else {
+    const p = PERSONAS.get(x.id);
+    const c = CIUDADES.find(z => p.ciudades.has(z.id));
+    if (c){ mapa.flyTo(c.coord, Math.max(mapa.getZoom(), 6)); abrirCiudad(c, p.id); }
+  }
+}
+
+function marcarSugerencia(i){
+  sugerenciaActiva = i;
+  listaSugerencias.querySelectorAll('li[role=option]').forEach((li, j) => li.setAttribute('aria-selected', String(j === i)));
+  entradaBusqueda.setAttribute('aria-activedescendant', i >= 0 ? `sug-${i}` : '');
+  listaSugerencias.querySelector(`#sug-${i}`)?.scrollIntoView({ block: 'nearest' });
+}
+
+entradaBusqueda.addEventListener('input', mostrarSugerencias);
+entradaBusqueda.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' && sugerencias.length){ e.preventDefault(); marcarSugerencia(Math.min(sugerenciaActiva + 1, sugerencias.length - 1)); }
+  else if (e.key === 'ArrowUp' && sugerencias.length){ e.preventDefault(); marcarSugerencia(Math.max(sugerenciaActiva - 1, 0)); }
+  else if (e.key === 'Enter'){ e.preventDefault(); elegirSugerencia(sugerencias[Math.max(sugerenciaActiva, 0)]); }
+  else if (e.key === 'Escape'){ listaSugerencias.hidden = true; entradaBusqueda.setAttribute('aria-expanded', 'false'); }
+});
+listaSugerencias.addEventListener('mousedown', e => {
+  const li = e.target.closest('li[data-i]');
+  if (li){ e.preventDefault(); elegirSugerencia(sugerencias[+li.dataset.i]); }
+});
+entradaBusqueda.addEventListener('blur', () => setTimeout(() => { listaSugerencias.hidden = true; entradaBusqueda.setAttribute('aria-expanded', 'false'); }, 150));
+
+const CATEGORIA_MARCAS = 'Category:Marcas de impresores en la Biblioteca Pública de la Universidad Nacional de La Plata';
+const dialogoAcerca = document.getElementById('acerca');
+document.getElementById('acerca-categoria').href = 'https://commons.wikimedia.org/wiki/' + encodeURIComponent(CATEGORIA_MARCAS.replace(/ /g, '_'));
+document.querySelectorAll('.acerca-desde').forEach(e => { e.textContent = ANIO_DESDE; });
+document.querySelectorAll('.acerca-hasta').forEach(e => { e.textContent = ANIO_HASTA; });
+document.querySelectorAll('.vista-desde').forEach(e => { e.textContent = VISTA_DESDE; });
+document.querySelectorAll('.vista-hasta').forEach(e => { e.textContent = VISTA_HASTA; });
+document.getElementById('abrir-acerca').onclick = () => dialogoAcerca.showModal();
+document.getElementById('cerrar-acerca').onclick = () => dialogoAcerca.close();
+dialogoAcerca.addEventListener('click', e => { if (e.target === dialogoAcerca) dialogoAcerca.close(); });
+const BUSQUEDA_MARCAS  = 'haswbstatement:P31=Q1260812 haswbstatement:P7482=Q16489703';
+const POR_PAGINA = 40;
+let MARCAS = null, cargandoMarcas = null;
+let galeria = { orden: 'titulo', tamano: 180, filtro: '', mostrar: POR_PAGINA };
+
+async function pedirTodos(params){
+  const base = { action: 'query', format: 'json', origin: '*', prop: 'imageinfo|extlinks',
+                 iiprop: 'url|timestamp|extmetadata', iiurlwidth: 400,
+                 iiextmetadatafilter: 'ObjectName|DateTimeOriginal|LicenseShortName|Artist',
+                 ellimit: 'max', ...params };
+  const paginas = new Map();
+  let cont = {};
+  do {
+    const q = new URLSearchParams({ ...base, ...cont });
+    const j = await fetch(`${API_COMMONS}?${q}`).then(r => r.json());
+    for (const pg of Object.values(j.query?.pages || {})){
+      const previa = paginas.get(pg.pageid);
+      if (!previa){ paginas.set(pg.pageid, { ...pg, extlinks: [...(pg.extlinks || [])] }); continue; }
+      if (pg.imageinfo && !previa.imageinfo) previa.imageinfo = pg.imageinfo;
+      previa.extlinks.push(...(pg.extlinks || []));
+    }
+    cont = j.continue || null;
+  } while (cont);
+  return [...paginas.values()];
+}
+
+const OPAC = /^https?:\/\/catalogo\.biblio\.unlp\.edu\.ar\/cgi-bin\/koha\/opac-detail\.pl\?[^ ]*biblionumber=\d+/i;
+const enlaceOpac = pg => (pg.extlinks || []).map(e => e.url || e['*'] || '').find(u => OPAC.test(u)) || null;
+
+function anioDeLaObra(html){
+  const t = String(html || '').replace(/<[^>]+>/g, ' ');
+  const a = t.match(/\b(1[0-9]{3})\b/);
+  if (a) return +a[1];
+  const romanos = { XIV: 1300, XV: 1400, XVI: 1500, XVII: 1600, XVIII: 1700 };
+  const r = t.match(/siglo\s+(XVIII|XVII|XVI|XV|XIV)\b/i);
+  if (r) return romanos[r[1].toUpperCase()];
+  const e = t.match(/\b(1[4-8])(st|nd|rd|th)[- ]century/i);
+  if (e) return (+e[1] - 1) * 100;
+  return null;
+}
+
+async function cargarMarcas(){
+  const [deCategoria, deBusqueda] = await Promise.all([
+    pedirTodos({ generator: 'categorymembers', gcmtitle: CATEGORIA_MARCAS, gcmtype: 'file', gcmlimit: 500 }).catch(() => []),
+    pedirTodos({ generator: 'search', gsrsearch: BUSQUEDA_MARCAS, gsrnamespace: 6, gsrlimit: 500 }).catch(() => [])
+  ]);
+  const porId = new Map();
+  for (const pg of [...deCategoria, ...deBusqueda]){
+    const ii = pg.imageinfo?.[0]; if (!ii) continue;
+    if (porId.has(pg.pageid)){ porId.get(pg.pageid).opac ??= enlaceOpac(pg); continue; }
+    const meta = ii.extmetadata || {};
+    porId.set(pg.pageid, {
+      id: pg.pageid, titulo: pg.title.replace(/^File:/, ''),
+      nombre: (meta.ObjectName?.value || pg.title.replace(/^File:/, '').replace(/\.[a-z0-9]+$/i, '')).replace(/<[^>]+>/g, ''),
+      miniatura: ii.thumburl, grande: ii.url, pagina: ii.descriptionurl,
+      fecha: ii.timestamp, anio: anioDeLaObra(meta.DateTimeOriginal?.value), licencia: meta.LicenseShortName?.value || '', depicts: [],
+      opac: enlaceOpac(pg)
+    });
+  }
+
+  const ids = [...porId.keys()];
+  for (let i = 0; i < ids.length; i += 50){
+    const lote = ids.slice(i, i + 50).map(n => 'M' + n).join('|');
+    try {
+      const j = await fetch(`${API_COMMONS}?action=wbgetentities&props=claims&format=json&origin=*&ids=${lote}`).then(r => r.json());
+      for (const e of Object.values(j.entities || {})){
+        const m = porId.get(Number(String(e.id).slice(1))); if (!m) continue;
+        const decl = e.statements || e.claims || {};
+        m.depicts = (decl.P180 || []).map(d => d.mainsnak?.datavalue?.value?.id).filter(Boolean);
+        m.biblio = (decl.P7482 || []).some(d => d.mainsnak?.datavalue?.value?.id === ORIGEN_BIBLIO);
+      }
+    } catch (err) { console.warn('No se pudieron leer los datos estructurados', err); }
+  }
+  return [...porId.values()];
+}
+
+function licenciaEnEspanol(l){
+  const t = String(l).replace(/<[^>]+>/g, '').trim();
+  if (/^cc0/i.test(t))                              return 'Dominio público (CC0)';
+  if (/public domain|^pd\b|^pd-/i.test(t))          return 'Dominio público';
+  if (/^cc[ -]by/i.test(t))                         return 'Licencia ' + t.replace(/^cc[ -]/i, 'CC ');
+  if (/no restrictions/i.test(t))                   return 'Sin restricciones conocidas';
+  return 'Licencia: ' + t;
+}
+
+function abrirGaleria(){
+  if (MARCAS){ pintarGaleria(); return; }
+  if (!cargandoMarcas) cargandoMarcas = cargarMarcas()
+    .then(m => { MARCAS = m; if (vistaActual === 'galeria') pintarGaleria(); })
+    .catch(e => { vistaGaleria.innerHTML = `<p class="vacio">No se pudo consultar Wikimedia Commons: ${esc(e.message)}</p>`; });
+}
+
+function pintarGaleria(){
+  const q = normalizar(galeria.filtro);
+  const nombrePersona = id => PERSONAS.get(id)?.nombre;
+  const lista = MARCAS
+    .filter(m => !q || normalizar([m.nombre, m.titulo, ...m.depicts.map(nombrePersona)].join(' ')).includes(q))
+    .filter(m => !filtrosActivos() || m.depicts.some(id => PERSONAS.has(id) && pasaFiltros(PERSONAS.get(id))))
+    .sort(galeria.orden === 'fecha'
+      ? (a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.nombre.localeCompare(b.nombre, 'es')
+      : (a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  listaGaleria = lista;
+  const visibles = lista.slice(0, galeria.mostrar);
+  const enfocado = document.activeElement?.id;
+  vistaGaleria.innerHTML = `
+    <div class="galeria-cab">
+      <h2>Marcas de impresores</h2>
+      <span class="cuenta">${lista.length} de ${MARCAS.length} imágenes</span>
+      <div class="controles">
+        <input id="galeria-buscar" type="search" placeholder="Buscar por título o impresor" aria-label="Buscar marcas" value="${esc(galeria.filtro)}">
+        <span class="orden" role="group" aria-label="Ordenar">
+          <button type="button" data-orden="titulo" aria-pressed="${galeria.orden === 'titulo'}">Por título</button><button
+                  type="button" data-orden="fecha" aria-pressed="${galeria.orden === 'fecha'}">Por año de la obra</button>
+        </span>
+        <label>Tamaño <select id="galeria-tamano">
+          ${[[120, 'Chico'], [180, 'Mediano'], [260, 'Grande']].map(([v, t]) =>
+            `<option value="${v}" ${galeria.tamano === v ? 'selected' : ''}>${t}</option>`).join('')}
+        </select></label>
+      </div>
+    </div>
+    <div class="rejilla" style="--miniatura:${galeria.tamano}px">
+      ${visibles.map(m => `
+        <figure class="marca ${m.biblio ? 'de-biblio' : ''}">
+          <button type="button" class="ver" data-marca="${m.id}" aria-label="Ampliar ${esc(m.nombre)}">
+            <img loading="lazy" src="${esc(m.miniatura)}" alt="${esc(m.nombre)}"></button>
+          <figcaption class="pie">
+            <strong>${esc(m.nombre)}</strong>
+            ${m.depicts.filter(id => PERSONAS.has(id))
+                .map(id => `<button type="button" class="persona" data-persona="${id}">${esc(nombrePersona(id))}</button>`).join(' · ')}
+            ${m.licencia ? `<span class="licencia">${esc(licenciaEnEspanol(m.licencia))}</span>` : ''}
+            ${m.opac ? `<a class="enlace-opac" href="${esc(m.opac)}" target="_blank" rel="noopener">Ver en el catálogo de la Biblioteca ↗</a>` : ''}
+            <a href="${esc(m.pagina)}" target="_blank" rel="noopener">Ver en Wikimedia Commons ↗</a>
+          </figcaption>
+        </figure>`).join('') || '<p class="vacio">No hay imágenes para mostrar.</p>'}
+    </div>
+    ${lista.length > visibles.length ? `<button type="button" class="cargar-mas" id="cargar-mas">Cargar más (${lista.length - visibles.length} restantes)</button>` : ''}`;
+  const b = document.getElementById('galeria-buscar');
+  if (enfocado === 'galeria-buscar'){ b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
+}
+
+vistaGaleria.addEventListener('input', e => {
+  if (e.target.id === 'galeria-buscar'){ galeria.filtro = e.target.value; galeria.mostrar = POR_PAGINA; pintarGaleria(); }
+});
+vistaGaleria.addEventListener('change', e => {
+  if (e.target.id === 'galeria-tamano'){ galeria.tamano = +e.target.value; pintarGaleria(); }
+});
+vistaGaleria.addEventListener('click', e => {
+  const orden = e.target.closest('[data-orden]');
+  if (orden){ galeria.orden = orden.dataset.orden; pintarGaleria(); return; }
+  if (e.target.id === 'cargar-mas'){ galeria.mostrar += POR_PAGINA; pintarGaleria(); return; }
+  const ver = e.target.closest('button.ver');
+  if (ver){
+    abrirVisor(listaGaleria.findIndex(x => x.id === +ver.dataset.marca));
+    return;
+  }
+  const persona = e.target.closest('button.persona');
+  if (persona){
+
+    const p = PERSONAS.get(persona.dataset.persona);
+    const c = CIUDADES.find(z => p.ciudades.has(z.id));
+    if (c){ mostrarVista('fichas'); mapa.flyTo(c.coord, Math.max(mapa.getZoom(), 6)); abrirCiudad(c, p.id); }
+    else { busqueda = p.nombre; mostrarVista('tabla'); }
+  }
+});
+let listaGaleria = [], indiceVisor = -1;
+const visor = document.getElementById('visor');
+function abrirVisor(i){
+  if (i < 0 || i >= listaGaleria.length) return;
+  indiceVisor = i;
+  const m = listaGaleria[i];
+  const img = document.getElementById('visor-img');
+  img.src = m.grande; img.alt = m.nombre;
+  document.getElementById('visor-titulo').textContent = m.nombre;
+  const impresores = m.depicts.filter(id => PERSONAS.has(id)).map(id => PERSONAS.get(id).nombre);
+  document.getElementById('visor-detalle').textContent = [
+    impresores.length ? impresores.join(', ') : null,
+    m.anio ? `Año: ${m.anio}` : null,
+    m.licencia ? licenciaEnEspanol(m.licencia) : null
+  ].filter(Boolean).join(' · ');
+  document.getElementById('visor-enlace').href = m.pagina;
+  const opac = document.getElementById('visor-opac');
+  opac.hidden = !m.opac; if (m.opac) opac.href = m.opac;
+  document.getElementById('visor-contador').textContent = `${i + 1} de ${listaGaleria.length}`;
+  document.getElementById('visor-anterior').disabled = i === 0;
+  document.getElementById('visor-siguiente').disabled = i === listaGaleria.length - 1;
+  if (!visor.open) visor.showModal();
+}
+document.getElementById('visor-anterior').onclick = () => abrirVisor(indiceVisor - 1);
+document.getElementById('visor-siguiente').onclick = () => abrirVisor(indiceVisor + 1);
+visor.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft'){ e.preventDefault(); abrirVisor(indiceVisor - 1); }
+  if (e.key === 'ArrowRight'){ e.preventDefault(); abrirVisor(indiceVisor + 1); }
+});
+document.getElementById('visor-cerrar').onclick = () => document.getElementById('visor').close();
+document.getElementById('visor').addEventListener('click', e => { if (e.target.id === 'visor') e.target.close(); });
+
+async function elegirElementos(){
+  const filas = await consultar(SPARQL_CANDIDATOS);
+  const conOcupacion = new Set(), tiposDe = new Map();
+  for (const f of filas){
+    const id = qid(f.item.value);
+    const ocupaciones = (f.ocupaciones?.value || '').split(' ').filter(Boolean).map(qid);
+    if (ocupaciones.some(o => SET_OCUPACIONES.has(o))) conOcupacion.add(id);
+    const tipos = (f.tipos?.value || '').split(' ').filter(Boolean).map(qid);
+    if (tipos.length) tiposDe.set(id, new Set(tipos));
+  }
+
+  const tipos = [...new Set([...tiposDe.values()].flatMap(t => [...t]))].filter(t => t !== 'Q5');
+  let tiposCompania = new Set();
+  if (tipos.length){
+    try { tiposCompania = await tiposQueSonCompania(tipos); }
+    catch (e) { console.warn('No se pudo revisar qué tipos son compañías', e); }
+  }
+  for (const [id, t] of tiposDe) if ([...t].some(x => tiposCompania.has(x))) COMPANIAS.add(id);
+  const enPeriodo = new Set((await consultar(SPARQL_EN_PERIODO)).map(f => qid(f.item.value)));
+  const elegidos = [...new Set([...conOcupacion, ...COMPANIAS])].filter(id => enPeriodo.has(id));
+  if (!elegidos.length) throw new Error('la consulta no devolvió elementos del WikiProyecto');
+  FILTRO_ACTUAL = `VALUES ?item { ${elegidos.map(id => 'wd:' + id).join(' ')} }`;
+
+}
+
+window.addEventListener('error', e => {
+  const panel = document.getElementById('panel');
+  if (panel) panel.insertAdjacentHTML('beforeend', `<p class="nota" style="color:#9b2c1f">Error en la página: ${esc(e.message)}</p>`);
+});
+window.addEventListener('unhandledrejection', e => {
+  const panel = document.getElementById('panel');
+  if (panel) panel.insertAdjacentHTML('beforeend', `<p class="nota" style="color:#9b2c1f">Error en la página: ${esc(e.reason?.message || e.reason)}</p>`);
+});
+function estadoCarga(texto){
+  if (!datosListos) document.getElementById('panel').innerHTML = `<p class="vacio">${esc(texto)}</p>`;
+}
+async function cargarCon(clave){
+  SERVICIO = SERVICIOS[clave];
+  COMPANIAS.clear(); FILTRO_ACTUAL = '';
+  estadoCarga(`Consultando ${SERVICIO.nombre}: eligiendo impresores…`);
+  await elegirElementos();
+  estadoCarga(`Consultando ${SERVICIO.nombre}: lugares, fechas e imágenes…`);
+  const conRespaldo = (consulta, nombre) => consultar(consulta).catch(async err => {
+    if (clave !== 'qlever') return [];
+    console.warn(`QLever no resolvió la consulta de ${nombre}; se pide al Wikidata Query Service.`, err);
+    try { return await consultar(consulta, SERVICIOS.wdqs); } catch (e) { return []; }
+  });
+  return Promise.all([consultar(SPARQL), conRespaldo(SPARQL_PERSONAS, 'personas'), conRespaldo(SPARQL_OCUPACIONES, 'ocupaciones')]);
+}
+let falloQlever = '';
+cargarCon('qlever')
+  .catch(err => {
+    console.warn('QLever no respondió; se usa el Wikidata Query Service.', err);
+    falloQlever = err.message;
+    estadoCarga('QLever no respondió; probando con el Wikidata Query Service…');
+    return cargarCon('wdqs');
+  })
+  .then(([filas, personas, ocupaciones]) => {
+    construir(filas, personas, ocupaciones);
+    datosListos = true;
+    llenarFiltros();
+    if (!vistaTabla.hidden) pintarTabla();
+    pintarMarcadores(1700);
+    pintarLinea(null);
+
+    marcarOrigenBiblioteca().then(() => {
+      if (!ARCHIVOS_BIBLIO.size) return;
+      if (vistaActual === 'tabla') pintarTabla();
+      if (ciudadActual) abrirCiudad(ciudadActual, null, { mantenerLinea: true });
+      pintarLinea(lineaCiudad);
+    });
+    document.getElementById('panel').innerHTML = resumenPanel();
+    llenarFuera();
+    document.getElementById('acerca-servicio').textContent =
+      `En esta carga se usó ${SERVICIO.nombre}${falloQlever ? ` (QLever no respondió: ${falloQlever})` : ''}: ` +
+      `${PERSONAS.size} elementos, ${conLugar().length} con lugar de trabajo en ${CIUDADES.length} ciudades.`;
+  })
+  .catch(e => {
+    const msg = `<p class="vacio">No se pudo consultar Wikidata ni con QLever ni con el Wikidata Query Service: ${esc(e.message)}${e.message === 'Failed to fetch'
+      ? '. Wikidata no respondió. Si antes hubo consultas que tardaron demasiado, Wikidata puede limitar los pedidos de tu conexión durante unos minutos: esperá un rato y recargá la página.' : ''}</p>`;
+    document.getElementById('panel').innerHTML = msg; vistaTabla.innerHTML = msg;
+    document.getElementById('acerca-servicio').textContent = 'En esta carga no se pudieron obtener los datos.';
+  });
+</script>
+</body>
+</html>
