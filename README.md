@@ -51,6 +51,7 @@ El mapa base usa una clave de CARTO incluida en el código. Si reutilizás este 
 ## Responsables
 
 - [Nadia Erica Buckmeier](mailto:nbuckmeier@biblio.unlp.edu.ar)
+- [Nubia Dellarciprete] (mailto:ndellarciprete@biblio.unlp.edu.ar)
 - [Julian Cueto](mailto:jjcueto@biblio.unlp.edu.ar)
 
 ## Licencias
